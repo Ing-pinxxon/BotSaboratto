@@ -1,0 +1,23 @@
+{
+  "name": "whatsapp-bot-framework",
+  "version": "2.0.0",
+  "description": "WhatsApp Bot Framework - Generic bot with configurable skills, schedules, and business logic.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "pm2:start": "pm2 start src/server.js --name whatsapp-bot",
+    "pm2:stop": "pm2 stop whatsapp-bot",
+    "pm2:logs": "pm2 logs whatsapp-bot",
+    "pm2:status": "pm2 status",
+    "tunnel": "npx localtunnel --port 3000 --subdomain agente-saboratto-gemi"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pm2": "^7.0.1"
+  }
+}
