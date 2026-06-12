@@ -57,4 +57,20 @@ export default {
             /gracias/i, /ok/i, /listo/i, /perfecto/i, /👍/, /si/i, /confirmado/i,
         ],
     },
+
+    // ── Cierre y desactivación tras confirmación ──
+    // Cuando la IA ya mostró el resumen con **Total:** y el cliente
+    // confirma (mensaje corto con alguna de estas palabras), el bot
+    // envía un mensaje de cierre y se desactiva para ese cliente por
+    // el resto del día (se reactiva automáticamente al día siguiente).
+    confirmationBlock: {
+        // El mensaje del cliente debe ser corto (<= maxLength) y contener
+        // alguna de estas palabras para considerarse una confirmación.
+        maxLength: 30,
+        patterns: [
+            /\b(ok|okay|okey|oka|listo|confirmo|confirmad[oa]|dale|de una|va|s[ií]|s[ií] se[ñn]or|perfecto|gracias)\b/i,
+        ],
+        // Mensaje que se envía al cliente justo antes de desactivar.
+        closingMessage: "✅ ¡Tu pedido ha sido confirmado! En unos minutos te damos el tiempo de espera. ¡Gracias por preferirnos! 🍔",
+    },
 };

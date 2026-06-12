@@ -21,6 +21,32 @@ const router = Router();
 // ── Estado en memoria ──
 const chatHistory = new ChatHistory(config.maxHistory);
 
+// Estado de pedido por cliente:
+//   { pendingConfirmation: bool, confirmedDate: 'YYYY-MM-DD' | null }
+const userState = new Map();
+
+/** Fecha actual en zona horaria del negocio (formato YYYY-MM-DD). */
+function getBusinessDate() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: config.timezone });
+}
+
+/** Obtiene (o crea) el estado de un cliente. */
+function getUserState(senderNumber) {
+    if (!userState.has(senderNumber)) {
+        userState.set(senderNumber, { pendingConfirmation: false, confirmedDate: null });
+    }
+    return userState.get(senderNumber);
+}
+
+/** ¿El mensaje del cliente es una confirmación corta? */
+function isClientConfirming(text) {
+    const { confirmationBlock } = config;
+    if (!confirmationBlock) return false;
+    const trimmed = text.trim();
+    if (trimmed.length > confirmationBlock.maxLength) return false;
+    return confirmationBlock.patterns.some(pattern => pattern.test(trimmed));
+}
+
 // ── Buffer con callback de procesamiento ──
 const messageBuffer = new MessageBuffer(config.debounceMs, processBuffer);
 
@@ -110,7 +136,26 @@ router.post('/', validateWebhookPayload, async (req, res) => {
 async function processBuffer(senderNumber, fragments, meta) {
     const combinedText = fragments.join("\n");
     const { senderName, phoneNumberId } = meta;
+    const state = getUserState(senderNumber);
 
+    // ── 1. Cliente ya confirmó su pedido hoy → ignorar por completo ──
+    if (state.confirmedDate === getBusinessDate()) {
+        logger.info(`🔕 ${senderName} (${senderNumber}) ya confirmó hoy. Mensaje ignorado.`);
+        return;
+    }
+
+    // ── 2. ¿Cliente está confirmando (dice ok, listo, confirmado, etc.)? ──
+    if (isClientConfirming(combinedText)) {
+        const closing = config.confirmationBlock.closingMessage;
+        logger.info(`✅ ${senderName} (${senderNumber}) confirmó. Enviando cierre y desactivando.`);
+        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId);
+        chatHistory.add(senderNumber, combinedText, closing);
+        state.pendingConfirmation = false;
+        state.confirmedDate = getBusinessDate();
+        return;
+    }
+
+    // ── 3. Flujo normal con IA ──
     const { instruction, type } = getBusinessContext();
     logger.info(`🧠 Generando respuesta con Gemini (${type} Agent)...`);
 
@@ -126,6 +171,12 @@ async function processBuffer(senderNumber, fragments, meta) {
 
     // ── Actualizar historial ──
     chatHistory.add(senderNumber, combinedText, aiReply);
+
+    // ── 4. ¿La IA mostró el resumen con Total? → queda a la espera de confirmación ──
+    if (config.forwarding.detectMarkers.every(marker => aiReply.includes(marker))) {
+        state.pendingConfirmation = true;
+        logger.info(`⏳ ${senderName} (${senderNumber}) con pedido pendiente de confirmación.`);
+    }
 
     // ── Reenvío de confirmación (genérico) ──
     const forwardNumber = config.notifications.forwarding;
