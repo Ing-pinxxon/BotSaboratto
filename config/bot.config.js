@@ -52,7 +52,7 @@ export default {
     // El bot reenvía al número de forwarding cuando la respuesta
     // de la IA contiene TODOS estos marcadores:
     forwarding: {
-        detectMarkers: ["**Total:**"],  // Marcadores en la respuesta de IA
+        detectMarkers: ["Total:"],  // Marcadores en la respuesta de IA
         ignorePatterns: [               // Si el mensaje del cliente tiene esto, NO reenviar
             /gracias/i, /ok/i, /listo/i, /perfecto/i, /👍/, /si/i, /confirmado/i,
         ],
