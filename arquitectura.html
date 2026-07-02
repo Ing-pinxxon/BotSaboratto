@@ -12,462 +12,163 @@
     --border: #2e3347;
     --text: #e8eaf0;
     --muted: #8b90a7;
-    --accent-blue: #4f8ef7;
-    --accent-green: #3ecf8e;
-    --accent-purple: #a78bfa;
-    --accent-orange: #fb923c;
-    --accent-teal: #22d3ee;
-    --accent-red: #f87171;
-    --accent-yellow: #fbbf24;
-    --accent-pink: #f472b6;
-
-    /* Layer colors */
-    --ext-bg: #1a2340;
-    --ext-border: #2a4080;
-    --ext-text: #7eb3ff;
-
-    --route-bg: #1a2d1a;
-    --route-border: #2a5a2a;
-    --route-text: #5ecf8e;
-
-    --service-bg: #2a1a40;
-    --service-border: #4a2a70;
-    --service-text: #c4a0fa;
-
-    --config-bg: #2d1f0a;
-    --config-border: #5a3a10;
-    --config-text: #fb923c;
-
-    --util-bg: #0a2a2d;
-    --util-border: #0f4a50;
-    --util-text: #22d3ee;
-
-    --mid-bg: #1a1a2d;
-    --mid-border: #2a2a50;
-    --mid-text: #8b90a7;
-
-    --mem-bg: #2d0a0a;
-    --mem-border: #5a1010;
-    --mem-text: #f87171;
+    --ext-bg: #1a2340; --ext-border: #2a4080; --ext-text: #7eb3ff;
+    --route-bg: #1a2d1a; --route-border: #2a5a2a; --route-text: #5ecf8e;
+    --service-bg: #2a1a40; --service-border: #4a2a70; --service-text: #c4a0fa;
+    --config-bg: #2d1f0a; --config-border: #5a3a10; --config-text: #fb923c;
+    --util-bg: #0a2a2d; --util-border: #0f4a50; --util-text: #22d3ee;
+    --mid-bg: #1a1a2d; --mid-border: #2a2a50; --mid-text: #8b90a7;
+    --mem-bg: #2d0a0a; --mem-border: #5a1010;
+    --accent-blue: #4f8ef7; --accent-green: #3ecf8e; --accent-purple: #a78bfa;
+    --accent-orange: #fb923c; --accent-teal: #22d3ee; --accent-red: #f87171;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
 
   header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 18px 28px; display: flex; align-items: center; gap: 14px;
   }
+  .logo { font-size: 26px; }
+  .title-block h1 { font-size: 18px; font-weight: 700; }
+  .title-block p { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  .logo {
-    font-size: 28px;
-  }
-
-  .title-block h1 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .title-block p {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+  /* ── CSS-only tabs via radio ── */
+  .tab-inputs { display: none; }
 
   .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 16px 32px 0;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
+    display: flex; gap: 4px; padding: 14px 28px 0;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .tab-label {
+    padding: 9px 18px; border-radius: 8px 8px 0 0; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    border: 1px solid transparent; border-bottom: none; user-select: none;
+    transition: color 0.15s;
+  }
+  .tab-label:hover { color: var(--text); }
+
+  #tab-arch:checked ~ .tabs label[for="tab-arch"],
+  #tab-flow:checked ~ .tabs label[for="tab-flow"] {
+    color: var(--accent-blue); border-color: var(--border);
+    border-bottom-color: var(--bg); background: var(--bg); margin-bottom: -1px;
   }
 
-  .tab {
-    padding: 10px 20px;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    border: 1px solid transparent;
-    border-bottom: none;
-    transition: all 0.15s;
-    user-select: none;
-  }
+  .panels { padding: 28px; }
+  .panel { display: none; }
 
-  .tab:hover { color: var(--text); background: var(--surface2); }
+  #tab-arch:checked ~ .panels #panel-arch { display: block; }
+  #tab-flow:checked ~ .panels #panel-flow { display: block; }
 
-  .tab.active {
-    color: var(--accent-blue);
-    border-color: var(--border);
-    border-bottom-color: var(--bg);
-    background: var(--bg);
-    margin-bottom: -1px;
-  }
+  /* ── Legend ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .ldot { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid; }
 
-  .panel { display: none; padding: 32px; }
-  .panel.active { display: block; }
-
-  /* ─── LEGEND ─── */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 28px;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .legend-dot {
-    width: 12px; height: 12px;
-    border-radius: 3px;
-    border: 1.5px solid;
-  }
-
-  /* ─── ARCHITECTURE DIAGRAM ─── */
-  .arch-diagram {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    max-width: 1200px;
-  }
-
-  .layer-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-
-  .layer-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .node {
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    border: 1px solid;
-    cursor: default;
-    transition: filter 0.15s;
-  }
-
-  .node:hover { filter: brightness(1.15); }
-
-  .node-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 3px;
-  }
-
-  .node-desc {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-
-  /* Node types */
+  /* ── Nodes ── */
+  .node { border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border: 1px solid; }
+  .node-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .node-desc { font-size: 11px; color: var(--muted); line-height: 1.45; }
   .node-ext    { background: var(--ext-bg);     border-color: var(--ext-border);     }
   .node-ext    .node-title { color: var(--ext-text); }
-
   .node-route  { background: var(--route-bg);   border-color: var(--route-border);   }
   .node-route  .node-title { color: var(--route-text); }
-
   .node-service{ background: var(--service-bg); border-color: var(--service-border); }
   .node-service .node-title { color: var(--service-text); }
-
   .node-config { background: var(--config-bg);  border-color: var(--config-border);  }
   .node-config .node-title { color: var(--config-text); }
-
   .node-util   { background: var(--util-bg);    border-color: var(--util-border);    }
   .node-util   .node-title { color: var(--util-text); }
-
   .node-mid    { background: var(--mid-bg);     border-color: var(--mid-border);     }
   .node-mid    .node-title { color: var(--mid-text); }
-
   .node-mem    { background: var(--mem-bg);     border-color: var(--mem-border);     }
   .node-mem    .node-title { color: var(--accent-red); }
 
-  /* Wide node that spans full grid row */
-  .wide-row {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  /* Arrows between layers */
-  .arrow-row {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    padding: 4px 0;
-  }
-
-  .arrow-line {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .arrow-line svg { flex-shrink: 0; }
-
-  /* ─── FLOW DIAGRAM ─── */
-  .flow-diagram {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .flow-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    position: relative;
-  }
-
-  .flow-step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    left: 19px;
-    top: 48px;
-    width: 2px;
-    height: calc(100% - 16px);
-    background: var(--border);
-  }
-
-  .flow-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    border: 2px solid;
-    position: relative;
-    z-index: 1;
-    background: var(--bg);
-  }
-
-  .flow-content {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
-  }
-
-  .flow-content h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .flow-content p {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .flow-content .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 8px;
-  }
-
-  .tag {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 4px;
-    letter-spacing: 0.04em;
-  }
-
-  .tag-blue   { background: #1e3a7a; color: #7eb3ff; }
-  .tag-green  { background: #0f3320; color: #5ecf8e; }
-  .tag-purple { background: #2a1a50; color: #c4a0fa; }
-  .tag-orange { background: #3a1800; color: #fb923c; }
-  .tag-red    { background: #3a0808; color: #f87171; }
-  .tag-teal   { background: #0a2830; color: #22d3ee; }
-  .tag-yellow { background: #2d1f00; color: #fbbf24; }
-
-  /* Branch indicator */
-  .branch-block {
-    background: var(--surface2);
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-top: 10px;
-  }
-
-  .branch-block .branch-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-    color: var(--muted);
-  }
-
-  .branch-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .branch-item {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-
-  .branch-item.yes { border-color: #2a5a2a; color: var(--accent-green); background: #0f2010; }
-  .branch-item.no  { border-color: #2a2a50; color: #8b90a7; background: #1a1a2d; }
-
-  /* Endpoint badge */
-  .endpoint-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-family: 'Courier New', monospace;
-    padding: 3px 9px;
-    border-radius: 4px;
-    margin-right: 5px;
-    margin-bottom: 4px;
-  }
-
-  .ep-get    { background: #0a2818; color: #3ecf8e; border: 1px solid #1a4830; }
-  .ep-post   { background: #1a1840; color: #7eb3ff; border: 1px solid #2a2a6a; }
-
-  /* Provider cards in whatsapp section */
-  .provider-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .provider-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 11px;
-    text-align: center;
-  }
-
-  .provider-card .provider-name {
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 3px;
-  }
-
-  .provider-card .provider-cond {
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  /* Summary cards */
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-  }
-
-  .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .stat-label {
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  /* Full-width sections for arch diagram */
-  .arch-full { grid-column: 1 / -1; }
-
-  .inline-nodes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-  }
+  /* ── Grids ── */
+  .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 16px; }
+  .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+  .g2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 16px; }
+  .g1 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 16px; }
 
   .section-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
   }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
+  .divider { text-align:center; color:var(--muted); font-size:18px; margin:6px 0 12px; }
+
+  /* endpoint badges */
+  .ep { display:inline-block; font-size:10px; font-family:monospace; padding:2px 7px;
+        border-radius:3px; margin-right:4px; margin-bottom:3px; }
+  .ep-get  { background:#0a2818; color:#3ecf8e; border:1px solid #1a4830; }
+  .ep-post { background:#1a1840; color:#7eb3ff; border:1px solid #2a2a6a; }
+
+  /* tags */
+  .tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; }
+  .tag { font-size:10px; font-weight:600; padding:2px 7px; border-radius:3px; letter-spacing:0.03em; }
+  .tb { background:#1e3a7a; color:#7eb3ff; }
+  .tg { background:#0f3320; color:#5ecf8e; }
+  .tp { background:#2a1a50; color:#c4a0fa; }
+  .to { background:#3a1800; color:#fb923c; }
+  .tr { background:#3a0808; color:#f87171; }
+  .tt { background:#0a2830; color:#22d3ee; }
+
+  /* summary stats */
+  .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:20px;
+           padding-top:20px; border-top:1px solid var(--border); }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:8px;
+          padding:14px; text-align:center; }
+  .stat-v { font-size:24px; font-weight:700; margin-bottom:3px; }
+  .stat-l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  /* ── FLOW ── */
+  .flow { max-width: 820px; }
+  .flow-step { display:flex; align-items:flex-start; gap:14px; position:relative; }
+  .flow-step:not(:last-child)::after {
+    content:''; position:absolute; left:18px; top:44px;
+    width:2px; height:calc(100% - 14px); background:var(--border);
   }
+  .flow-icon {
+    width:38px; height:38px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:16px; flex-shrink:0; border:2px solid;
+    background:var(--bg); position:relative; z-index:1;
+  }
+  .flow-card {
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:9px; padding:12px 14px; margin-bottom:14px;
+  }
+  .flow-card h3 { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .flow-card p  { font-size:11px; color:var(--muted); line-height:1.5; }
+  .branch {
+    background:var(--surface2); border:1px dashed var(--border);
+    border-radius:6px; padding:8px 12px; margin-top:8px;
+  }
+  .branch-t { font-size:10px; font-weight:700; text-transform:uppercase;
+              letter-spacing:.06em; color:var(--muted); margin-bottom:5px; }
+  .branch-r { display:flex; gap:6px; flex-wrap:wrap; }
+  .br-y { font-size:11px; padding:3px 9px; border-radius:4px; border:1px solid #2a5a2a; color:#5ecf8e; background:#0f2010; }
+  .br-n { font-size:11px; padding:3px 9px; border-radius:4px; border:1px solid var(--border); color:var(--muted); }
+  .br-w { font-size:11px; padding:3px 9px; border-radius:4px; border:1px solid #5a3a10; color:#fb923c; background:#1a0f00; }
 
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .providers { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:8px; }
+  .prov { background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+          padding:7px; font-size:11px; text-align:center; }
+  .prov-n { font-weight:600; color:var(--text); margin-bottom:2px; }
+  .prov-c { color:var(--muted); font-size:10px; }
 
-  .mb-20 { margin-bottom: 20px; }
-  .mb-8 { margin-bottom: 8px; }
+  .parallel-label {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    color:#7ecf3e; background:#0f2010; border:1px solid #2a4a10;
+    border-radius:4px; padding:2px 8px; display:inline-block; margin-bottom:6px;
+  }
 </style>
 </head>
 <body>
+
+<!-- Radio inputs (hidden) that drive CSS-only tabs -->
+<input class="tab-inputs" type="radio" name="tabs" id="tab-arch" checked>
+<input class="tab-inputs" type="radio" name="tabs" id="tab-flow">
 
 <header>
   <div class="logo">🍔</div>
@@ -478,442 +179,323 @@
 </header>
 
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('arch')">Arquitectura de Módulos</div>
-  <div class="tab" onclick="switchTab('flow')">Flujo de Pedido</div>
+  <label class="tab-label" for="tab-arch">Arquitectura de Módulos</label>
+  <label class="tab-label" for="tab-flow">Flujo de Pedido</label>
 </div>
 
-<!-- ══════════════════════════════════════════
-     PANEL 1: ARCHITECTURE
-═══════════════════════════════════════════ -->
-<div class="panel active" id="panel-arch">
+<div class="panels">
 
-  <div class="legend">
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--ext-bg);border-color:var(--ext-border)"></div>
-      APIs Externas
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--route-bg);border-color:var(--route-border)"></div>
-      Rutas / Endpoints
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--service-bg);border-color:var(--service-border)"></div>
-      Servicios Internos
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--config-bg);border-color:var(--config-border)"></div>
-      Configuración / Negocio
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--util-bg);border-color:var(--util-border)"></div>
-      Utilidades
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--mid-bg);border-color:var(--mid-border)"></div>
-      Middleware
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background:var(--mem-bg);border-color:var(--mem-border)"></div>
-      Estado en Memoria
-    </div>
-  </div>
+  <!-- ════════════════════════════════
+       PANEL 1 — ARCHITECTURE
+  ════════════════════════════════ -->
+  <div class="panel" id="panel-arch">
 
-  <!-- LAYER: External -->
-  <div class="section-label">Capa Externa — APIs y Canales</div>
-  <div class="grid-4 mb-20">
-    <div class="node node-ext">
-      <div class="node-title">📱 Meta WhatsApp Cloud API</div>
-      <div class="node-desc">graph.facebook.com/v21.0<br>Envío de mensajes (primario)<br><code style="font-size:10px;color:#7eb3ff">AUTH: Bearer TOKEN</code></div>
+    <div class="legend">
+      <div class="legend-item"><div class="ldot" style="background:var(--ext-bg);border-color:var(--ext-border)"></div>APIs Externas</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--route-bg);border-color:var(--route-border)"></div>Rutas HTTP</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--service-bg);border-color:var(--service-border)"></div>Servicios</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--config-bg);border-color:var(--config-border)"></div>Config / Negocio</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--util-bg);border-color:var(--util-border)"></div>Utilidades</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--mid-bg);border-color:var(--mid-border)"></div>Middleware</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--mem-bg);border-color:var(--mem-border)"></div>Estado en Memoria</div>
     </div>
-    <div class="node node-ext">
-      <div class="node-title">🔗 Kapso AI</div>
-      <div class="node-desc">api.kapso.ai / app.kapso.ai<br>Proxy WhatsApp alternativo<br>Proveedor de webhook entrante<br><code style="font-size:10px;color:#7eb3ff">AUTH: X-API-Key</code></div>
-    </div>
-    <div class="node node-ext">
-      <div class="node-title">🤖 Google Gemini</div>
-      <div class="node-desc">@google/generative-ai SDK<br>Modelo: gemini-2.5-flash-lite<br>Generación de respuestas AI<br><code style="font-size:10px;color:#7eb3ff">AUTH: GEMINI_API_KEY</code></div>
-    </div>
-    <div class="node node-ext">
-      <div class="node-title">💳 Automatizaciones de Pago</div>
-      <div class="node-desc">Zapier / MacroDroid<br>Bre-B · Nequi · Daviplata<br>POST externo a /notify-payment</div>
-    </div>
-  </div>
 
-  <!-- Arrow -->
-  <div style="text-align:center;margin-bottom:12px;color:var(--muted);font-size:20px">↕</div>
-
-  <!-- LAYER: Entry + Express -->
-  <div class="section-label">Servidor — Express.js (src/)</div>
-  <div class="grid-2 mb-20">
-    <div class="node node-mid" style="padding:14px">
-      <div class="node-title" style="font-size:14px">🚪 server.js</div>
-      <div class="node-desc">Entry point real · carga .env · arranca HTTP en PORT (default 3000)</div>
-    </div>
-    <div class="node node-mid" style="padding:14px">
-      <div class="node-title" style="font-size:14px">⚙️ app.js</div>
-      <div class="node-desc">Express app factory · monta middleware global · registra rutas · /health endpoint</div>
-    </div>
-  </div>
-
-  <!-- LAYER: Middleware + Routes side by side -->
-  <div class="grid-2 mb-20">
-    <!-- Middleware -->
-    <div>
-      <div class="section-label" style="font-size:11px">Middleware (src/middleware/)</div>
-      <div class="node node-mid mb-8">
-        <div class="node-title">🛡️ security.js</div>
-        <div class="node-desc">Headers de seguridad: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, elimina X-Powered-By</div>
+    <div class="section-label">Capa Externa — APIs y Canales</div>
+    <div class="g4">
+      <div class="node node-ext">
+        <div class="node-title">📱 Meta WhatsApp Cloud API</div>
+        <div class="node-desc">graph.facebook.com/v21.0<br>Envío de mensajes (prioridad 1)<br><code style="font-size:10px;color:#7eb3ff">Bearer META_ACCESS_TOKEN</code></div>
       </div>
-      <div class="node node-mid">
-        <div class="node-title">✅ validation.js</div>
-        <div class="node-desc">Rechaza bodies no-objeto con HTTP 400 en rutas webhook y payments</div>
+      <div class="node node-ext">
+        <div class="node-title">🔗 Kapso AI</div>
+        <div class="node-desc">api.kapso.ai / app.kapso.ai<br>Proxy WhatsApp alternativo<br>Proveedor webhook entrante<br><code style="font-size:10px;color:#7eb3ff">X-API-Key: KAPSO_API_KEY</code></div>
+      </div>
+      <div class="node node-ext">
+        <div class="node-title">🤖 Google Gemini</div>
+        <div class="node-desc">@google/generative-ai SDK<br>Modelo: gemini-2.5-flash-lite<br>Genera respuestas del bot<br><code style="font-size:10px;color:#7eb3ff">GEMINI_API_KEY</code></div>
+      </div>
+      <div class="node node-ext">
+        <div class="node-title">💳 Automatizaciones de Pago</div>
+        <div class="node-desc">Zapier / MacroDroid<br>Bre-B · Nequi · Daviplata<br>POST externo → /notify-payment</div>
       </div>
     </div>
 
-    <!-- Routes -->
-    <div>
-      <div class="section-label" style="font-size:11px">Rutas (src/routes/)</div>
-      <div class="node node-route mb-8">
-        <div class="node-title">📨 webhook.js</div>
+    <div class="divider">↕</div>
+
+    <div class="section-label">Servidor Express.js (src/)</div>
+    <div class="g2">
+      <div class="node node-mid" style="padding:12px">
+        <div class="node-title" style="font-size:13px">🚪 server.js — Entry point</div>
+        <div class="node-desc">Carga dotenv · inicia HTTP server en PORT (default 3000) · importa app.js</div>
+      </div>
+      <div class="node node-mid" style="padding:12px">
+        <div class="node-title" style="font-size:13px">⚙️ app.js — Express factory</div>
+        <div class="node-desc">Monta middleware global · registra rutas · endpoint GET /health → { status, timestamp }</div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div>
+        <div class="section-label" style="font-size:10px">Middleware (src/middleware/)</div>
+        <div class="node node-mid">
+          <div class="node-title">🛡️ security.js</div>
+          <div class="node-desc">X-Content-Type-Options · X-Frame-Options · X-XSS-Protection · elimina X-Powered-By</div>
+        </div>
+        <div class="node node-mid">
+          <div class="node-title">✅ validation.js</div>
+          <div class="node-desc">Rechaza bodies no-objeto con HTTP 400 en /webhook y /notify-payment</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-label" style="font-size:10px">Rutas (src/routes/)</div>
+        <div class="node node-route">
+          <div class="node-title">📨 webhook.js</div>
+          <div class="node-desc">
+            <span class="ep ep-get">GET /webhook</span> Verificación Meta<br>
+            <span class="ep ep-post">POST /webhook</span> Mensajes entrantes<br>
+            Parser dual Meta + Kapso · buffer → AI → respuesta → cocina<br>
+            userState: pendingConfirmation, confirmedDate, bloqueo diario
+          </div>
+        </div>
+        <div class="node node-route" style="margin-top:8px">
+          <div class="node-title">💰 payments.js</div>
+          <div class="node-desc">
+            <span class="ep ep-post">POST /notify-payment</span><br>
+            Recibe {monto, metodo, pagador} · envía WhatsApp a BOLD_NOTIFY_NUMBER
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">↕</div>
+
+    <div class="section-label">Servicios (src/services/)</div>
+    <div class="g3">
+      <div class="node node-service">
+        <div class="node-title">🧠 ai.service.js</div>
+        <div class="node-desc">Wrapper Gemini SDK · crea sesión de chat con historial del usuario · inyecta skill como system instruction · retorna texto generado</div>
+      </div>
+      <div class="node node-service">
+        <div class="node-title">📤 whatsapp.service.js</div>
         <div class="node-desc">
-          <span class="endpoint-badge ep-get">GET /webhook</span> Verificación Meta<br>
-          <span class="endpoint-badge ep-post">POST /webhook</span> Mensajes entrantes<br>
-          Parser dual: Meta Cloud API + Kapso<br>
-          Lógica: buffer → AI → respuesta → cocina
+          Modo 1 → Meta Cloud API (META_ACCESS_TOKEN)<br>
+          Modo 2 → Kapso proxy (KAPSO_API_KEY)<br>
+          Modo 3 → Kapso legacy fallback<br>
+          Selección automática por env vars
         </div>
       </div>
-      <div class="node node-route">
-        <div class="node-title">💰 payments.js</div>
-        <div class="node-desc">
-          <span class="endpoint-badge ep-post">POST /notify-payment</span><br>
-          Recibe {monto, metodo, pagador}<br>
-          Envía notificación a BOLD_NOTIFY_NUMBER
+      <div class="node node-service">
+        <div class="node-title">🕐 schedule.service.js</div>
+        <div class="node-desc">Hora actual en America/Bogota · horario semanal decimal 24h · devuelve {instruction, type: OPEN|CLOSED} · inyecta [PROXIMO_DIA] y [PROXIMA_HORA] en closed.md</div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div>
+        <div class="section-label" style="font-size:10px">Utilidades (src/utils/)</div>
+        <div class="node node-util">
+          <div class="node-title">⏱️ buffer.js — MessageBuffer</div>
+          <div class="node-desc">Fragmentos por usuario · debounce 10 000ms · reinicia timer en cada mensaje · dispara onFlush con texto completo acumulado</div>
+        </div>
+        <div class="node node-util" style="margin-top:8px">
+          <div class="node-title">💬 history.js — ChatHistory</div>
+          <div class="node-desc">Pares user/model formato Gemini · máx 60 entradas (30 pares) · recorte FIFO</div>
+        </div>
+        <div class="node node-util" style="margin-top:8px">
+          <div class="node-title">📋 logger.js</div>
+          <div class="node-desc">Prefijo [Saboratto] · debug() solo si DEBUG=true</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-label" style="font-size:10px">Configuración (config/)</div>
+        <div class="node node-config">
+          <div class="node-title">⚙️ bot.config.js</div>
+          <div class="node-desc">Nombre, emoji, timezone · horario semanal (null=cerrado) · debounceMs:10000 · maxHistory:60 · métodos de pago · KITCHEN_NUMBER · BOLD_NOTIFY_NUMBER · patrones de confirmación</div>
+        </div>
+        <div class="node node-config" style="margin-top:8px">
+          <div class="node-title">🔗 hooks.js</div>
+          <div class="node-desc">shouldForward(): detecta "Total:" + no es confirmación · buildForwardMessage(): formatea resumen para cocina</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-label" style="font-size:10px">Skills / Prompts (config/skills/)</div>
+        <div class="node node-config">
+          <div class="node-title">📄 open.md — Horario ABIERTO</div>
+          <div class="node-desc">~335 líneas · menú completo con precios COP · reglas de negocio (surcharge icopor, domicilio, combos) · 8 ejemplos anotados · checklist pre-respuesta · datos de pago</div>
+        </div>
+        <div class="node node-config" style="margin-top:8px">
+          <div class="node-title">📄 closed.md — Horario CERRADO</div>
+          <div class="node-desc">Menú condensado · prohíbe tomar pedidos o calcular totales · placeholders [PROXIMO_DIA] [PROXIMA_HORA] reemplazados en runtime</div>
+        </div>
+        <div class="section-label" style="font-size:10px;margin-top:16px">Estado en Memoria (webhook.js)</div>
+        <div class="node node-mem">
+          <div class="node-title">💾 ChatHistory + MessageBuffer + userState</div>
+          <div class="node-desc">Todo en RAM · sin base de datos · se reinicia al restartar el proceso · userState almacena pendingConfirmation y confirmedDate por número</div>
         </div>
       </div>
     </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-v" style="color:var(--accent-blue)">0</div><div class="stat-l">Bases de datos</div></div>
+      <div class="stat"><div class="stat-v" style="color:var(--accent-green)">4</div><div class="stat-l">Endpoints HTTP</div></div>
+      <div class="stat"><div class="stat-v" style="color:var(--accent-purple)">3</div><div class="stat-l">Proveedores WA</div></div>
+      <div class="stat"><div class="stat-v" style="color:var(--accent-orange)">10s</div><div class="stat-l">Debounce buffer</div></div>
+      <div class="stat"><div class="stat-v" style="color:var(--accent-teal)">60</div><div class="stat-l">Máx historial AI</div></div>
+      <div class="stat"><div class="stat-v" style="color:var(--accent-red)">RAM</div><div class="stat-l">Todo el estado</div></div>
+    </div>
+
   </div>
 
-  <!-- Arrow -->
-  <div style="text-align:center;margin-bottom:12px;color:var(--muted);font-size:20px">↕</div>
+  <!-- ════════════════════════════════
+       PANEL 2 — ORDER FLOW
+  ════════════════════════════════ -->
+  <div class="panel" id="panel-flow">
 
-  <!-- LAYER: Services -->
-  <div class="section-label">Servicios (src/services/)</div>
-  <div class="grid-3 mb-20">
-    <div class="node node-service">
-      <div class="node-title">🧠 ai.service.js</div>
-      <div class="node-desc">Wrapper Gemini SDK · crea sesión de chat con historial · inyecta system instruction (open.md / closed.md) · retorna texto</div>
-    </div>
-    <div class="node node-service">
-      <div class="node-title">📤 whatsapp.service.js</div>
-      <div class="node-desc">
-        Modo 1: Meta Cloud API<br>
-        Modo 2: Kapso proxy (api.kapso.ai)<br>
-        Modo 3: Kapso legacy (app.kapso.ai)<br>
-        Fallback automático por env vars
-      </div>
-    </div>
-    <div class="node node-service">
-      <div class="node-title">🕐 schedule.service.js</div>
-      <div class="node-desc">Horarios en America/Bogota · devuelve {instruction, type: OPEN|CLOSED} · carga open.md / closed.md · inyecta [PROXIMO_DIA] y [PROXIMA_HORA]</div>
-    </div>
-  </div>
-
-  <!-- LAYER: Utils + Config + Memory -->
-  <div class="grid-3 mb-20">
-    <!-- Utils -->
-    <div>
-      <div class="section-label" style="font-size:11px">Utilidades (src/utils/)</div>
-      <div class="node node-util mb-8">
-        <div class="node-title">⏱️ buffer.js — MessageBuffer</div>
-        <div class="node-desc">Acumula fragmentos por usuario · debounce 10s · dispara onFlush con texto completo</div>
-      </div>
-      <div class="node node-util mb-8">
-        <div class="node-title">💬 history.js — ChatHistory</div>
-        <div class="node-desc">Pares user/model en formato Gemini · máx 60 entradas (30 pares) · recorta FIFO</div>
-      </div>
-      <div class="node node-util">
-        <div class="node-title">📋 logger.js</div>
-        <div class="node-desc">Console logger con prefijo [Saboratto] · debug() solo si DEBUG=true</div>
-      </div>
+    <div class="legend" style="margin-bottom:28px">
+      <div class="legend-item"><div class="ldot" style="background:var(--ext-bg);border-color:var(--ext-border)"></div>Canal externo</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--route-bg);border-color:var(--route-border)"></div>Webhook / Router</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--util-bg);border-color:var(--util-border)"></div>Buffer / Estado</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--service-bg);border-color:var(--service-border)"></div>Lógica / AI</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--config-bg);border-color:var(--config-border)"></div>Negocio / Config</div>
+      <div class="legend-item"><div class="ldot" style="background:var(--mem-bg);border-color:var(--mem-border)"></div>Acción final</div>
     </div>
 
-    <!-- Config -->
-    <div>
-      <div class="section-label" style="font-size:11px">Configuración (config/)</div>
-      <div class="node node-config mb-8">
-        <div class="node-title">⚙️ bot.config.js</div>
-        <div class="node-desc">Nombre, emoji, zona horaria · horario semanal (decimal 24h) · debounceMs:10000 · maxHistory:60 · métodos de pago · números de notificación</div>
-      </div>
-      <div class="node node-config mb-8">
-        <div class="node-title">🔗 hooks.js</div>
-        <div class="node-desc">shouldForward(): detecta "Total:" en respuesta AI · buildForwardMessage(): formatea resumen de pedido para cocina</div>
-      </div>
-      <div class="node node-config mb-8">
-        <div class="node-title">📄 skills/open.md</div>
-        <div class="node-desc">System prompt horario ABIERTO · menú completo (hamburguesas, perros, salchipapas, sandwiches) · reglas de negocio · ejemplos · checklist</div>
-      </div>
-      <div class="node node-config">
-        <div class="node-title">📄 skills/closed.md</div>
-        <div class="node-desc">System prompt horario CERRADO · prohíbe tomar pedidos · inyecta próximo día/hora de apertura</div>
-      </div>
-    </div>
+    <div class="flow">
 
-    <!-- In-memory state -->
-    <div>
-      <div class="section-label" style="font-size:11px">Estado en Memoria (webhook.js)</div>
-      <div class="node node-mem mb-8">
-        <div class="node-title">💾 ChatHistory (instancia)</div>
-        <div class="node-desc">Historial de conversación por número · persiste en RAM hasta reinicio</div>
-      </div>
-      <div class="node node-mem mb-8">
-        <div class="node-title">💾 MessageBuffer (instancia)</div>
-        <div class="node-desc">Fragmentos acumulados + timers por número · se vacía en cada flush</div>
-      </div>
-      <div class="node node-mem">
-        <div class="node-title">💾 userState (Map)</div>
-        <div class="node-desc">Por número de teléfono:<br>· pendingConfirmation<br>· confirmedDate (bloqueo diario)<br>· Se reinicia al restartar el proceso</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Summary stats -->
-  <div class="summary-grid">
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-blue)">0</div>
-      <div class="stat-label">Bases de datos</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-green)">4</div>
-      <div class="stat-label">Endpoints HTTP</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-purple)">3</div>
-      <div class="stat-label">Proveedores WhatsApp</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-orange)">10s</div>
-      <div class="stat-label">Debounce buffer</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-teal)">60</div>
-      <div class="stat-label">Máx. historial AI</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent-red)">RAM</div>
-      <div class="stat-label">Todo el estado</div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ══════════════════════════════════════════
-     PANEL 2: FLOW
-═══════════════════════════════════════════ -->
-<div class="panel" id="panel-flow">
-
-  <div class="legend" style="margin-bottom:32px">
-    <div class="legend-item"><div class="legend-dot" style="background:#1a2340;border-color:#2a4080"></div>Cliente externo</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#1a2d1a;border-color:#2a5a2a"></div>Webhook / Router</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2a1a40;border-color:#4a2a70"></div>Servicio / AI</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2d1f0a;border-color:#5a3a10"></div>Lógica de negocio</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2d0a0a;border-color:#5a1010"></div>Resultado / Acción final</div>
-  </div>
-
-  <div class="flow-diagram">
-
-    <!-- Step 1 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--ext-border);color:var(--ext-text)">📱</div>
-      <div class="flow-content">
-        <h3 style="color:var(--ext-text)">1. Cliente envía mensaje WhatsApp</h3>
-        <p>El cliente escribe desde WhatsApp. Puede ser un mensaje largo enviado en varios fragmentos rápidos (tipeo por palabras).</p>
-        <div class="tags">
-          <span class="tag tag-blue">Meta Cloud API</span>
-          <span class="tag tag-blue">Kapso Webhook</span>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--ext-border);color:var(--ext-text)">📱</div>
+        <div class="flow-card">
+          <h3 style="color:var(--ext-text)">1. Cliente envía mensaje WhatsApp</h3>
+          <p>El cliente escribe desde WhatsApp. Puede llegar en varios fragmentos rápidos (tipeo por palabras). Meta o Kapso entregan el mensaje al webhook como HTTP POST.</p>
+          <div class="tags"><span class="tag tb">Meta Cloud API</span><span class="tag tb">Kapso webhook</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 2 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--route-border);color:var(--route-text)">🔄</div>
-      <div class="flow-content">
-        <h3 style="color:var(--route-text)">2. POST /webhook — Parser dual</h3>
-        <p>El servidor recibe el HTTP POST. El parser detecta automáticamente si el formato es Meta Cloud API o Kapso, extrae texto, número y nombre del remitente.</p>
-        <div class="tags">
-          <span class="tag tag-green">src/routes/webhook.js</span>
-          <span class="tag tag-green">src/middleware/validation.js</span>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--route-border);color:var(--route-text)">🔄</div>
+        <div class="flow-card">
+          <h3 style="color:var(--route-text)">2. POST /webhook — Parser dual</h3>
+          <p>El servidor detecta automáticamente si el formato es Meta Cloud API o Kapso, extrae texto, número de teléfono y nombre del remitente.</p>
+          <div class="tags"><span class="tag tg">src/routes/webhook.js</span><span class="tag tg">src/middleware/validation.js</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 3 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--util-border);color:var(--util-text)">⏱️</div>
-      <div class="flow-content">
-        <h3 style="color:var(--util-text)">3. MessageBuffer — Acumulación 10s</h3>
-        <p>El mensaje se añade al buffer del usuario. El timer de 10 segundos se reinicia con cada nuevo fragmento. Esto agrupa mensajes enviados rápido uno tras otro antes de procesar.</p>
-        <div class="tags">
-          <span class="tag tag-teal">src/utils/buffer.js</span>
-          <span class="tag tag-teal">debounceMs: 10000</span>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--util-border);color:var(--util-text)">⏱️</div>
+        <div class="flow-card">
+          <h3 style="color:var(--util-text)">3. MessageBuffer — Acumulación 10 segundos</h3>
+          <p>El texto se añade al buffer del usuario. El timer de 10 s se reinicia con cada nuevo fragmento. Esto agrupa mensajes enviados rápido antes de procesarlos.</p>
+          <div class="tags"><span class="tag tt">src/utils/buffer.js</span><span class="tag tt">debounceMs: 10 000</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 4 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:#4a2a70;color:var(--accent-purple)">🔍</div>
-      <div class="flow-content">
-        <h3 style="color:var(--accent-purple)">4. processBuffer() — Chequeos previos al AI</h3>
-        <p>Después del silencio de 10s, se ejecutan validaciones en orden. El flujo se corta en el primer caso que aplique.</p>
-        <div class="branch-block">
-          <div class="branch-title">Caso A — ¿Ya confirmó pedido hoy?</div>
-          <div class="branch-row">
-            <div class="branch-item yes">SI → Ignorar silenciosamente (bloqueo diario)</div>
-            <div class="branch-item no">NO → continúa →</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:#4a2a70;color:#a78bfa">🔍</div>
+        <div class="flow-card">
+          <h3 style="color:#a78bfa">4. processBuffer() — Validaciones previas al AI</h3>
+          <p>Tras 10 s de silencio se ejecutan chequeos en orden. El flujo se corta en el primer caso que aplique.</p>
+          <div class="branch">
+            <div class="branch-t">Caso A — ¿El usuario ya confirmó pedido hoy?</div>
+            <div class="branch-r">
+              <span class="br-y">SI → ignorar silenciosamente (bloqueo diario)</span>
+              <span class="br-n">NO → continúa ↓</span>
+            </div>
           </div>
-        </div>
-        <div class="branch-block" style="margin-top:8px">
-          <div class="branch-title">Caso B — ¿Es una confirmación corta? (≤30 chars, "ok/sí/listo/dale/de una...")</div>
-          <div class="branch-row">
-            <div class="branch-item yes">SI → Enviar cierre + bloquear usuario hoy</div>
-            <div class="branch-item no">NO → continúa →</div>
+          <div class="branch" style="margin-top:7px">
+            <div class="branch-t">Caso B — ¿Mensaje corto de confirmación? (≤30 chars: "ok / sí / listo / dale / de una / confirmado…")</div>
+            <div class="branch-r">
+              <span class="br-y">SI → enviar mensaje de cierre + bloquear usuario hoy</span>
+              <span class="br-n">NO → continúa ↓</span>
+            </div>
           </div>
-        </div>
-        <div class="tags" style="margin-top:10px">
-          <span class="tag tag-orange">config/bot.config.js</span>
-          <span class="tag tag-red">userState Map</span>
+          <div class="tags" style="margin-top:8px"><span class="tag to">config/bot.config.js</span><span class="tag tr">userState Map</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 5 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--config-border);color:var(--config-text)">🕐</div>
-      <div class="flow-content">
-        <h3 style="color:var(--config-text)">5. schedule.service.js — ¿Abierto o cerrado?</h3>
-        <p>Se consulta la hora actual en America/Bogota y el horario semanal configurado. El resultado determina qué prompt de AI se carga.</p>
-        <div class="branch-block">
-          <div class="branch-title">Resultado:</div>
-          <div class="branch-row">
-            <div class="branch-item yes">OPEN → carga skills/open.md (menú completo + reglas)</div>
-            <div class="branch-item" style="border-color:var(--config-border);color:var(--config-text);background:#1a0f00">CLOSED → carga skills/closed.md + inyecta próx. apertura</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--config-border);color:var(--config-text)">🕐</div>
+        <div class="flow-card">
+          <h3 style="color:var(--config-text)">5. schedule.service.js — ¿Abierto o cerrado?</h3>
+          <p>Se consulta la hora actual en America/Bogota y el horario semanal configurado. El resultado define qué prompt de AI se usa.</p>
+          <div class="branch">
+            <div class="branch-t">Resultado según horario:</div>
+            <div class="branch-r">
+              <span class="br-y">OPEN → carga skills/open.md (menú + reglas completas)</span>
+              <span class="br-w">CLOSED → carga skills/closed.md + inyecta [PROXIMO_DIA] [PROXIMA_HORA]</span>
+            </div>
           </div>
-        </div>
-        <div class="tags" style="margin-top:10px">
-          <span class="tag tag-orange">src/services/schedule.service.js</span>
-          <span class="tag tag-orange">config/skills/</span>
+          <div class="tags" style="margin-top:8px"><span class="tag to">src/services/schedule.service.js</span><span class="tag to">config/skills/</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 6 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:#4a2a70;color:#a78bfa)">🤖</div>
-      <div class="flow-content">
-        <h3 style="color:var(--accent-purple)">6. ai.service.js — Google Gemini</h3>
-        <p>Se crea una sesión de chat Gemini con el historial de conversación del usuario (máx 60 entradas). El skill open/closed actúa como system instruction. Gemini genera la respuesta.</p>
-        <div class="tags">
-          <span class="tag tag-purple">src/services/ai.service.js</span>
-          <span class="tag tag-purple">gemini-2.5-flash-lite</span>
-          <span class="tag tag-teal">ChatHistory</span>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:#4a2a70;color:#a78bfa">🤖</div>
+        <div class="flow-card">
+          <h3 style="color:#a78bfa">6. ai.service.js — Gemini genera la respuesta</h3>
+          <p>Se crea una sesión de chat Gemini con el historial del usuario (máx 60 entradas). El skill open/closed actúa como system instruction. Gemini responde en español siguiendo las reglas del negocio.</p>
+          <div class="tags"><span class="tag tp">src/services/ai.service.js</span><span class="tag tp">gemini-2.5-flash-lite</span><span class="tag tt">ChatHistory</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 7 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--ext-border);color:var(--ext-text)">📤</div>
-      <div class="flow-content">
-        <h3 style="color:var(--ext-text)">7. whatsapp.service.js — Enviar respuesta al cliente</h3>
-        <p>La respuesta de Gemini se envía al cliente. El servicio selecciona automáticamente el proveedor disponible según las variables de entorno.</p>
-        <div class="provider-grid">
-          <div class="provider-card">
-            <div class="provider-name" style="color:var(--accent-blue)">Meta Cloud API</div>
-            <div class="provider-cond">Prioridad 1<br>META_ACCESS_TOKEN presente</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--ext-border);color:var(--ext-text)">📤</div>
+        <div class="flow-card">
+          <h3 style="color:var(--ext-text)">7. whatsapp.service.js — Respuesta al cliente</h3>
+          <p>La respuesta de Gemini se envía al cliente. El servicio selecciona el proveedor según env vars disponibles.</p>
+          <div class="providers">
+            <div class="prov"><div class="prov-n" style="color:#7eb3ff">Meta Cloud API</div><div class="prov-c">Prioridad 1<br>META_ACCESS_TOKEN</div></div>
+            <div class="prov"><div class="prov-n" style="color:#22d3ee">Kapso Proxy</div><div class="prov-c">Prioridad 2<br>KAPSO_API_KEY</div></div>
+            <div class="prov"><div class="prov-n" style="color:var(--muted)">Kapso Legacy</div><div class="prov-c">Fallback final<br>app.kapso.ai</div></div>
           </div>
-          <div class="provider-card">
-            <div class="provider-name" style="color:var(--accent-teal)">Kapso Proxy</div>
-            <div class="provider-cond">Prioridad 2<br>KAPSO_API_KEY presente</div>
-          </div>
-          <div class="provider-card">
-            <div class="provider-name" style="color:var(--muted)">Kapso Legacy</div>
-            <div class="provider-cond">Fallback final<br>app.kapso.ai</div>
-          </div>
-        </div>
-        <div class="tags" style="margin-top:10px">
-          <span class="tag tag-blue">src/services/whatsapp.service.js</span>
+          <div class="tags" style="margin-top:8px"><span class="tag tb">src/services/whatsapp.service.js</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 8 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:#0f4a50;color:var(--accent-teal)">💾</div>
-      <div class="flow-content">
-        <h3 style="color:var(--accent-teal)">8. Actualizar historial + detectar estado</h3>
-        <p>El par usuario/modelo se guarda en ChatHistory. Luego se revisa si la respuesta del AI contiene <strong>"Total:"</strong> — la señal de que el bot presentó un resumen completo de pedido.</p>
-        <div class="branch-block">
-          <div class="branch-title">¿Respuesta contiene "Total:"?</div>
-          <div class="branch-row">
-            <div class="branch-item yes">SI → pendingConfirmation = true</div>
-            <div class="branch-item no">NO → sin cambio de estado</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--util-border);color:var(--util-text)">💾</div>
+        <div class="flow-card">
+          <h3 style="color:var(--util-text)">8. Actualizar historial + detectar estado</h3>
+          <p>El par usuario/modelo se guarda en ChatHistory. Se revisa si la respuesta del AI contiene <strong>"Total:"</strong> — señal de que el bot presentó un resumen completo de pedido.</p>
+          <div class="branch">
+            <div class="branch-t">¿Respuesta contiene "Total:"?</div>
+            <div class="branch-r">
+              <span class="br-y">SI → pendingConfirmation = true</span>
+              <span class="br-n">NO → sin cambio de estado</span>
+            </div>
           </div>
-        </div>
-        <div class="tags" style="margin-top:10px">
-          <span class="tag tag-teal">src/utils/history.js</span>
-          <span class="tag tag-red">userState.pendingConfirmation</span>
+          <div class="tags" style="margin-top:8px"><span class="tag tt">src/utils/history.js</span><span class="tag tr">userState.pendingConfirmation</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 9 -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:var(--config-border);color:var(--config-text)">🍳</div>
-      <div class="flow-content">
-        <h3 style="color:var(--config-text)">9. hooks.js — ¿Reenviar a la cocina?</h3>
-        <p>Solo si el bot está ABIERTO: se evalúa si la respuesta debe llegar a la cocina. Se revisa que contenga "Total:" y que el mensaje del usuario NO sea una simple confirmación.</p>
-        <div class="branch-block">
-          <div class="branch-title">shouldForward() == true?</div>
-          <div class="branch-row">
-            <div class="branch-item yes">SI → buildForwardMessage() → WhatsApp KITCHEN_NUMBER</div>
-            <div class="branch-item no">NO → flujo termina aquí</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:var(--config-border);color:var(--config-text)">🍳</div>
+        <div class="flow-card">
+          <h3 style="color:var(--config-text)">9. hooks.js — ¿Reenviar a la cocina?</h3>
+          <p>Solo si el bot está ABIERTO: <code>shouldForward()</code> revisa que la respuesta tenga "Total:" y que el mensaje del usuario no sea solo una confirmación.</p>
+          <div class="branch">
+            <div class="branch-t">shouldForward() == true?</div>
+            <div class="branch-r">
+              <span class="br-y">SI → buildForwardMessage() → WhatsApp → KITCHEN_NUMBER</span>
+              <span class="br-n">NO → flujo termina aquí</span>
+            </div>
           </div>
-        </div>
-        <div class="tags" style="margin-top:10px">
-          <span class="tag tag-orange">config/hooks.js</span>
-          <span class="tag tag-blue">KITCHEN_NUMBER (env)</span>
+          <div class="tags" style="margin-top:8px"><span class="tag to">config/hooks.js</span><span class="tag tb">KITCHEN_NUMBER (env)</span></div>
         </div>
       </div>
-    </div>
 
-    <!-- Step 10 — Payment parallel flow -->
-    <div class="flow-step">
-      <div class="flow-icon" style="border-color:#2a4a10;color:#7ecf3e">💳</div>
-      <div class="flow-content" style="border-color:#2a4a10">
-        <h3 style="color:#7ecf3e">Flujo paralelo — Notificación de pago</h3>
-        <p>Independiente del flujo de pedido: la automatización externa (Zapier / MacroDroid) detecta un pago en Nequi / Daviplata / Bre-B y hace un POST a <code>/notify-payment</code>. El bot formatea y envía confirmación al número de pagos.</p>
-        <div class="tags">
-          <span class="tag tag-green">POST /notify-payment</span>
-          <span class="tag tag-blue">src/routes/payments.js</span>
-          <span class="tag tag-blue">BOLD_NOTIFY_NUMBER (env)</span>
+      <div class="flow-step">
+        <div class="flow-icon" style="border-color:#2a4a10;color:#7ecf3e">💳</div>
+        <div class="flow-card" style="border-color:#2a4a10">
+          <div class="parallel-label">Flujo paralelo — Pagos</div>
+          <h3 style="color:#7ecf3e">Notificación de pago</h3>
+          <p>Independiente del flujo de pedido: la automatización externa (Zapier / MacroDroid) detecta un pago en Nequi / Daviplata / Bre-B y hace un POST a <code>/notify-payment</code> con {monto, metodo, pagador}. El bot formatea y envía confirmación al número de pagos.</p>
+          <div class="tags"><span class="tag tg">POST /notify-payment</span><span class="tag tb">src/routes/payments.js</span><span class="tag tb">BOLD_NOTIFY_NUMBER</span></div>
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 
 </div>
-
-<script>
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['arch','flow'][i] === name);
-  });
-  document.querySelectorAll('.panel').forEach((p, i) => {
-    p.classList.toggle('active', ['arch','flow'][i] === name);
-  });
-}
-</script>
 </body>
 </html>
