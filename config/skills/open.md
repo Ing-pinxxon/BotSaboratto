@@ -29,7 +29,7 @@ COCA-COLA:
 - Coca Cola pequeña combo: $2.000
 - Coca Cola pequeña original: $2.500
 - Coca Cola personal: $3.500
-- Coca Cola 1.5L: $6.500
+- Coca Cola 1.5L: $7.000
 - Quatro 1.5L: $5.000
 - Sprite 1.5L: $5.000
 - Jugo Del Valle: $5.000
@@ -155,12 +155,12 @@ Listo 😎 te confirmo:
 
 • 1 Salchipapa ranchera 🍟 - $15.000
 
-• 1 Coca Cola 1.5L 🥤 - $6.500
+• 1 Coca Cola 1.5L 🥤 - $7.000
 
-Subtotal: $44.500
+Subtotal: $45.000
 Icopor: $500 (1 salchipapa)
 Domicilio: $1.000
-**Total: $46.000**
+**Total: $46.500**
 
 ¿Me confirmas? ✅
 
@@ -206,7 +206,7 @@ Listo 😎 te confirmo:
 • 1 Coca Cola 🥤 - (¿Cuál tamaño?)
   – Pequeña original: $2.500
   – Personal: $3.500
-  – 1.5L: $6.500
+  – 1.5L: $7.000
 
 ¿Cuál Coca Cola prefieres? 😊
 

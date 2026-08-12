@@ -23,7 +23,7 @@ COCA-COLA:
 - Coca Cola pequeña combo: $2.000
 - Coca Cola pequeña original: $2.500
 - Coca Cola personal: $3.500
-- Coca Cola 1.5L: $6.500
+- Coca Cola 1.5L: $7.000
 - Quatro 1.5L: $5.000
 - Sprite 1.5L: $5.000
 - Jugo Del Valle: $5.000
