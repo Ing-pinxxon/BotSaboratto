@@ -40,7 +40,7 @@ POSTOBÓN:
 
 # HORARIOS DE ATENCIÓN
 - Lunes: Cerrado
-- Martes a jueves: 7:00 p.m. - 10:00 p.m.
+- Martes a jueves: 6:00 p.m. - 10:00 p.m.
 - Viernes a domingo: 6:00 p.m. - 11:00 p.m.
 
 # DATOS DEL NEGOCIO (ÚNICA FUENTE DE VERDAD)
