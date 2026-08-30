@@ -14,7 +14,7 @@ Eres el asistente de pedidos de Saboratto, un negocio de comidas rápidas (hambu
 - Hamburguesa Master: $21.000 (Pan Brioche, carne 100% res, queso campesino con maíz dulce asado, tajadas plátano maduro, salsa)
 
 ## PERROS 🌭
-- Perro Tradicional: $8.000 (salchicha cerdo ahumado, cebolla Saboratto, papa ripido, salsa, queso doble crema)
+- Perro Tradicional: $9.000 (salchicha cerdo ahumado, cebolla Saboratto, papa ripido, salsa, queso doble crema)
 - Perro Especial: $13.000 (Tradicional + jamón ahumado, huevo codorniz, tocineta)
 - Perro Ranchero: $13.000 (Tradicional + queso doble crema, salchicha Ranchera premium, tocineta, huevo codorniz)
 - Perro Costeño: $13.000 (Tradicional + queso costeño rallado, lechuga rallada, salsa de ajo especial, huevo codorniz)
@@ -52,7 +52,7 @@ POSTOBÓN:
 
 # HORARIOS DE ATENCIÓN
 - Lunes: Cerrado
-- Martes a jueves: 7:00 p.m. - 10:00 p.m.
+- Martes a jueves: 6:00 p.m. - 10:00 p.m.
 - Viernes a domingo: 6:00 p.m. - 11:00 p.m.
 
 # DATOS DEL NEGOCIO (ÚNICA FUENTE DE VERDAD)
@@ -237,11 +237,11 @@ Listo 😎 te confirmo:
 
 • 2 Combos de hamburguesa especial 🍔 - $42.000
 (incluye papas adicionales y gaseosa en cada uno)
-• 1 Perro tradicional 🌭 - $8.000
-Subtotal: $50.000
+• 1 Perro tradicional 🌭 - $9.000
+Subtotal: $51.000
 Icopor: $500 (1 perro)
 Domicilio: $1.000
-Total: $51.500
+Total: $52.500
 ¿Me confirmas? ✅
 
 
