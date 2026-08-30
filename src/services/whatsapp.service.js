@@ -10,6 +10,9 @@ import logger from '../utils/logger.js';
 dotenv.config();
 
 const KAPSO_API_KEY = process.env.KAPSO_API_KEY;
+const ZERNIO_API_KEY = process.env.ZERNIO_API_KEY;
+const ZERNIO_BASE_URL = process.env.ZERNIO_BASE_URL || 'https://zernio.com/api/v1';
+const ZERNIO_FROM = process.env.ZERNIO_FROM_NUMBER;
 
 /**
  * Envía un mensaje de WhatsApp al destinatario.
@@ -24,7 +27,20 @@ export async function sendWhatsAppMessage(to, text, phoneNumberId) {
     const activePhoneId = phoneNumberId || process.env.DEFAULT_PHONE_NUMBER_ID;
 
     try {
-        if (metaToken && activePhoneId) {
+        if (ZERNIO_API_KEY) {
+            // ── Enviar vía Zernio (proveedor oficial, Bearer token) ──
+            const url = `${ZERNIO_BASE_URL}/whatsapp/messages`;
+            const payload = { to, text };
+            if (ZERNIO_FROM) payload.from = ZERNIO_FROM;
+
+            await axios.post(url, payload, {
+                headers: {
+                    'Authorization': `Bearer ${ZERNIO_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            logger.info(`📤 Mensaje enviado a ${to} (Vía Zernio)`);
+        } else if (metaToken && activePhoneId) {
             // ── Enviar vía Meta WhatsApp Cloud API ──
             const url = `https://graph.facebook.com/v21.0/${activePhoneId}/messages`;
             const payload = {

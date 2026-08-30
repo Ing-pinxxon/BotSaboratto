@@ -81,6 +81,38 @@ router.post('/', validateWebhookPayload, async (req, res) => {
         const body = req.body;
         logger.debug("📥 Datos recibidos en Webhook:", JSON.stringify(body, null, 2));
 
+        // ── Parseo Zernio (proveedor oficial; formato con participantId/direction) ──
+        // El payload puede venir plano o envuelto en { data: {...} }.
+        const zernioData = (body?.data && typeof body.data === 'object' && !Array.isArray(body.data))
+            ? body.data
+            : body;
+        const isZernio = !!(zernioData?.participantId || zernioData?.participantUsername
+            || (zernioData?.direction !== undefined && zernioData?.text !== undefined));
+        if (isZernio) {
+            // Ignorar mensajes salientes: el bot NO debe responder a sus propios
+            // mensajes (evita bucles infinitos).
+            const dir = String(zernioData.direction || "").toLowerCase();
+            if (dir === "outgoing" || dir === "outbound") {
+                logger.debug(`Webhook Zernio ignorado: mensaje ${dir}.`);
+                return;
+            }
+            const zText = typeof zernioData.text === "string"
+                ? zernioData.text
+                : zernioData.text?.body;
+            const zFrom = String(zernioData.participantId || zernioData.participantUsername || "")
+                .replace(/^\+/, "");
+            const zName = zernioData.participantName || "Cliente";
+
+            if (!zText || !zFrom) {
+                logger.debug("Webhook Zernio ignorado: sin texto o número de remitente.");
+                return;
+            }
+
+            logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
+            messageBuffer.add(zFrom, zText, { senderName: zName, phoneNumberId: "" });
+            return;
+        }
+
         let incomingMessages = [];
         let senderName = "Cliente";
         let phoneNumberId = "";
