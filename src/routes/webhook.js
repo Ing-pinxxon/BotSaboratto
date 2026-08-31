@@ -113,8 +113,17 @@ router.post('/', validateWebhookPayload, async (req, res) => {
                 return;
             }
 
+            // Datos necesarios para responder por Zernio (envío por conversación).
+            const zConversationId = zMsg.conversationId || body?.conversation?.id;
+            const zAccountId = body?.account?.id || body?.account?.accountId;
+
             logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
-            messageBuffer.add(zFrom, zText, { senderName: zName, phoneNumberId: "" });
+            messageBuffer.add(zFrom, zText, {
+                senderName: zName,
+                phoneNumberId: "",
+                zernioConversationId: zConversationId,
+                zernioAccountId: zAccountId,
+            });
             return;
         }
 
@@ -172,7 +181,8 @@ router.post('/', validateWebhookPayload, async (req, res) => {
 // ============================================================
 async function processBuffer(senderNumber, fragments, meta) {
     const combinedText = fragments.join("\n");
-    const { senderName, phoneNumberId } = meta;
+    const { senderName, phoneNumberId, zernioConversationId, zernioAccountId } = meta;
+    const zernio = { conversationId: zernioConversationId, accountId: zernioAccountId };
     const state = getUserState(senderNumber);
 
     // ── 1. Cliente ya confirmó su pedido hoy → ignorar por completo ──
@@ -185,7 +195,7 @@ async function processBuffer(senderNumber, fragments, meta) {
     if (isClientConfirming(combinedText)) {
         const closing = config.confirmationBlock.closingMessage;
         logger.info(`✅ ${senderName} (${senderNumber}) confirmó. Enviando cierre y desactivando.`);
-        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId);
+        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId, zernio);
         chatHistory.add(senderNumber, combinedText, closing);
         state.pendingConfirmation = false;
         state.confirmedDate = getBusinessDate();
@@ -204,7 +214,7 @@ async function processBuffer(senderNumber, fragments, meta) {
     logger.info(`✅ Respuesta Gemini: ${aiReply}`);
 
     // ── Enviar al cliente ──
-    await sendWhatsAppMessage(senderNumber, aiReply, phoneNumberId);
+    await sendWhatsAppMessage(senderNumber, aiReply, phoneNumberId, zernio);
 
     // ── Actualizar historial ──
     chatHistory.add(senderNumber, combinedText, aiReply);
@@ -220,13 +230,20 @@ async function processBuffer(senderNumber, fragments, meta) {
     if (forwardNumber && type === 'OPEN') {
         const shouldSend = shouldForward({ aiReply, userMessage: combinedText });
         if (shouldSend) {
-            logger.info("📨 Reenviando confirmación...");
-            const forwardMsg = buildForwardMessage({
-                aiReply,
-                senderName,
-                senderNumber,
-            });
-            await sendWhatsAppMessage(forwardNumber, forwardMsg, phoneNumberId);
+            if (process.env.ZERNIO_API_KEY) {
+                // Zernio solo responde dentro de una conversación existente, así que no
+                // se puede reenviar a un número arbitrario (cocina) por este método.
+                // Pendiente: resolver vía una conversación/cuenta dedicada de cocina.
+                logger.warn("📨 Reenvío a cocina omitido: no soportado aún con Zernio (envío por conversación).");
+            } else {
+                logger.info("📨 Reenviando confirmación...");
+                const forwardMsg = buildForwardMessage({
+                    aiReply,
+                    senderName,
+                    senderNumber,
+                });
+                await sendWhatsAppMessage(forwardNumber, forwardMsg, phoneNumberId);
+            }
         }
     }
 }
