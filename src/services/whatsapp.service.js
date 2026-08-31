@@ -12,7 +12,6 @@ dotenv.config();
 const KAPSO_API_KEY = process.env.KAPSO_API_KEY;
 const ZERNIO_API_KEY = process.env.ZERNIO_API_KEY;
 const ZERNIO_BASE_URL = process.env.ZERNIO_BASE_URL || 'https://zernio.com/api/v1';
-const ZERNIO_FROM = process.env.ZERNIO_FROM_NUMBER;
 
 /**
  * Envía un mensaje de WhatsApp al destinatario.
@@ -21,17 +20,26 @@ const ZERNIO_FROM = process.env.ZERNIO_FROM_NUMBER;
  * @param {string} to              - Número destino
  * @param {string} text            - Texto del mensaje
  * @param {string} phoneNumberId   - ID del número de teléfono de Meta
+ * @param {object} [zernio]        - Datos de Zernio: { conversationId, accountId }
  */
-export async function sendWhatsAppMessage(to, text, phoneNumberId) {
+export async function sendWhatsAppMessage(to, text, phoneNumberId, zernio = {}) {
     const metaToken = process.env.META_ACCESS_TOKEN;
     const activePhoneId = phoneNumberId || process.env.DEFAULT_PHONE_NUMBER_ID;
 
     try {
         if (ZERNIO_API_KEY) {
             // ── Enviar vía Zernio (proveedor oficial, Bearer token) ──
-            const url = `${ZERNIO_BASE_URL}/whatsapp/messages`;
-            const payload = { to, text };
-            if (ZERNIO_FROM) payload.from = ZERNIO_FROM;
+            // Zernio responde DENTRO de una conversación existente:
+            //   POST /inbox/conversations/{conversationId}/messages  { accountId, message }
+            const conversationId = zernio.conversationId;
+            const accountId = zernio.accountId || process.env.ZERNIO_ACCOUNT_ID;
+            if (!conversationId) {
+                logger.error(`No se pudo enviar vía Zernio a ${to}: falta conversationId (Zernio solo responde dentro de una conversación existente).`);
+                return;
+            }
+            const url = `${ZERNIO_BASE_URL}/inbox/conversations/${conversationId}/messages`;
+            const payload = { message: text };
+            if (accountId) payload.accountId = accountId;
 
             await axios.post(url, payload, {
                 headers: {
@@ -39,7 +47,7 @@ export async function sendWhatsAppMessage(to, text, phoneNumberId) {
                     'Content-Type': 'application/json',
                 },
             });
-            logger.info(`📤 Mensaje enviado a ${to} (Vía Zernio)`);
+            logger.info(`📤 Mensaje enviado a ${to} (Vía Zernio, conv ${conversationId})`);
         } else if (metaToken && activePhoneId) {
             // ── Enviar vía Meta WhatsApp Cloud API ──
             const url = `https://graph.facebook.com/v21.0/${activePhoneId}/messages`;
