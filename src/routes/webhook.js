@@ -5,9 +5,10 @@
 import { Router } from 'express';
 import dotenv from 'dotenv';
 import config from '../../config/bot.config.js';
-import { shouldForward, buildForwardMessage } from '../../config/hooks.js';
+import { buildKitchenComanda, extractItems, parseOrderAmounts } from '../../config/hooks.js';
 import { generateResponse } from '../services/ai.service.js';
 import { sendWhatsAppMessage } from '../services/whatsapp.service.js';
+import { saveOrder, nextOrderNumber } from '../services/orders.service.js';
 import { getBusinessContext } from '../services/schedule.service.js';
 import { MessageBuffer } from '../utils/buffer.js';
 import { ChatHistory } from '../utils/history.js';
@@ -22,7 +23,8 @@ const router = Router();
 const chatHistory = new ChatHistory(config.maxHistory);
 
 // Estado de pedido por cliente:
-//   { pendingConfirmation: bool, confirmedDate: 'YYYY-MM-DD' | null }
+//   { pendingConfirmation: bool, confirmedDate: 'YYYY-MM-DD' | null,
+//     lastOrderSummary: string | null, lastOrderAt: number | null }
 const userState = new Map();
 
 /** Fecha actual en zona horaria del negocio (formato YYYY-MM-DD). */
@@ -33,9 +35,59 @@ function getBusinessDate() {
 /** Obtiene (o crea) el estado de un cliente. */
 function getUserState(senderNumber) {
     if (!userState.has(senderNumber)) {
-        userState.set(senderNumber, { pendingConfirmation: false, confirmedDate: null });
+        userState.set(senderNumber, {
+            pendingConfirmation: false,
+            confirmedDate: null,
+            lastOrderSummary: null,
+            lastOrderAt: null,
+        });
     }
     return userState.get(senderNumber);
+}
+
+/**
+ * Al confirmar el cliente: genera la comanda con el último resumen del
+ * pedido, la envía al número de cocina (1:1) y guarda el boucher
+ * (CSV local + Google Sheets). No hace nada si no hubo un pedido con total.
+ */
+async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNumberId }) {
+    const orderSummary = state.lastOrderSummary;
+    if (!orderSummary) return;   // el cliente confirmó sin un pedido con total
+    state.lastOrderSummary = null;  // evitar duplicar el mismo pedido
+
+    const businessDate = getBusinessDate();
+    const orderNumber = nextOrderNumber(businessDate);
+    const now = new Date();
+    const time = now.toLocaleTimeString('es-CO', {
+        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: config.timezone,
+    });
+
+    // ── Enviar comanda a cocina (número 1:1) ──
+    const kitchenNumber = config.notifications.forwarding;
+    if (kitchenNumber) {
+        const comanda = buildKitchenComanda({ orderSummary, senderName, senderNumber, orderNumber });
+        logger.info(`👨‍🍳 Enviando comanda #${orderNumber} a cocina (${kitchenNumber})...`);
+        await sendWhatsAppMessage(kitchenNumber, comanda, phoneNumberId);
+    } else {
+        logger.warn('KITCHEN_NUMBER no configurado: la comanda solo se guarda, no se envía por WhatsApp.');
+    }
+
+    // ── Guardar boucher (traza) ──
+    const amounts = parseOrderAmounts(orderSummary);
+    await saveOrder({
+        businessDate,
+        time,
+        orderNumber,
+        senderName,
+        senderNumber,
+        items: extractItems(orderSummary),
+        subtotal: amounts.subtotal,
+        icopor: amounts.icopor,
+        domicilio: amounts.domicilio,
+        total: amounts.total,
+        diaSemana: now.toLocaleDateString('es-CO', { weekday: 'long', timeZone: config.timezone }),
+        rawSummary: orderSummary,
+    });
 }
 
 /** ¿El mensaje del cliente es una confirmación corta? */
@@ -152,6 +204,13 @@ async function processBuffer(senderNumber, fragments, meta) {
         chatHistory.add(senderNumber, combinedText, closing);
         state.pendingConfirmation = false;
         state.confirmedDate = getBusinessDate();
+
+        // ── Comanda a cocina + boucher (traza). No debe romper el cierre. ──
+        try {
+            await dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNumberId });
+        } catch (error) {
+            logger.error('Error al despachar el pedido confirmado:', error.message || error);
+        }
         return;
     }
 
@@ -172,25 +231,14 @@ async function processBuffer(senderNumber, fragments, meta) {
     // ── Actualizar historial ──
     chatHistory.add(senderNumber, combinedText, aiReply);
 
-    // ── 4. ¿La IA mostró el resumen con Total? → queda a la espera de confirmación ──
+    // ── 4. ¿La IA mostró el resumen con Total? → guardar como "último pedido"
+    //        y quedar a la espera de confirmación. La comanda a cocina se
+    //        genera recién cuando el cliente confirma (paso 2). ──
     if (config.forwarding.detectMarkers.every(marker => aiReply.includes(marker))) {
         state.pendingConfirmation = true;
+        state.lastOrderSummary = aiReply;
+        state.lastOrderAt = Date.now();
         logger.info(`⏳ ${senderName} (${senderNumber}) con pedido pendiente de confirmación.`);
-    }
-
-    // ── Reenvío de confirmación (genérico) ──
-    const forwardNumber = config.notifications.forwarding;
-    if (forwardNumber && type === 'OPEN') {
-        const shouldSend = shouldForward({ aiReply, userMessage: combinedText });
-        if (shouldSend) {
-            logger.info("📨 Reenviando confirmación...");
-            const forwardMsg = buildForwardMessage({
-                aiReply,
-                senderName,
-                senderNumber,
-            });
-            await sendWhatsAppMessage(forwardNumber, forwardMsg, phoneNumberId);
-        }
     }
 }
 
