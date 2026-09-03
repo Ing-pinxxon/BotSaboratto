@@ -73,11 +73,42 @@ Cada pedido **confirmado** se guarda automáticamente para dejar traza y aliment
 > tablero de cocina en vivo**: cada pedido confirmado aparece como una fila en tiempo
 > real. El envío por WhatsApp solo aplica si la cocina tiene un **número aparte**.
 
-### Configurar Google Sheets (opcional)
+### Configurar Google Sheets — Camino recomendado (Apps Script, copiar-pegar)
+
+Es la forma más fácil: no necesitas Google Cloud ni claves. Solo pegas un
+script en tu hoja y lo publicas.
+
+1. Crea una hoja nueva en [Google Sheets](https://sheets.new).
+2. Menú **Extensiones → Apps Script**. Borra lo que haya y pega esto:
+   ```javascript
+   function doPost(e) {
+     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+     var data = JSON.parse(e.postData.contents);
+     var headers = ['Fecha','Hora','N','Cliente','Numero','Items',
+                    'Subtotal','Icopor','Domicilio','Total','DiaSemana'];
+     if (sheet.getLastRow() === 0) sheet.appendRow(headers);
+     sheet.appendRow(headers.map(function (h) { return data[h] != null ? data[h] : ''; }));
+     return ContentService
+       .createTextOutput(JSON.stringify({ ok: true }))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+3. Guarda (💾). Luego **Implementar → Nueva implementación → Tipo: Aplicación web**.
+   - *Ejecutar como:* Yo mismo. *Quién tiene acceso:* **Cualquier usuario**.
+   - **Implementar**, autoriza los permisos, y **copia la URL** (termina en `/exec`).
+4. Pega esa URL en tu `.env`:
+   ```env
+   SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/XXXXXXXX/exec
+   ```
+   El encabezado de la hoja se crea solo con el primer pedido.
+
+### Configurar Google Sheets — Camino avanzado (Service Account)
+
+Alternativa si prefieres no usar Apps Script:
 
 1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto y habilita **Google Sheets API**.
 2. Crea un **Service Account** y genera una clave JSON.
-3. Crea una hoja de cálculo en Google Sheets y **compártela como Editor** con el email del service account (algo como `tu-bot@tu-proyecto.iam.gserviceaccount.com`).
+3. Crea una hoja de cálculo y **compártela como Editor** con el email del service account (algo como `tu-bot@tu-proyecto.iam.gserviceaccount.com`).
 4. Copia el **ID de la hoja** desde su URL: `.../spreadsheets/d/`**`<ESTE_ID>`**`/edit`.
 5. Agrega a tu `.env`:
    ```env
@@ -85,7 +116,6 @@ Cada pedido **confirmado** se guarda automáticamente para dejar traza y aliment
    GOOGLE_SERVICE_ACCOUNT_EMAIL=tu-bot@tu-proyecto.iam.gserviceaccount.com
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
    ```
-   El encabezado de la hoja se crea solo la primera vez.
 
 > **Impresora (a futuro):** el texto de la comanda se genera en `config/hooks.js`
 > (`buildKitchenComanda`), listo para enviarse a una impresora térmica ESC/POS.

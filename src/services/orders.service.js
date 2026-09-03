@@ -1,15 +1,18 @@
 // ============================================================
 // ORDERS SERVICE (BOUCHER / TRAZA)
-// Persiste cada pedido confirmado en dos destinos:
+// Persiste cada pedido confirmado en la nube y/o local:
 //   1) CSV local (siempre) → traza durable, offline, base para impresora.
-//   2) Google Sheets (si está configurado) → hoja de cálculo en la nube
-//      para análisis y decisiones. Se degrada con gracia si falta config
-//      o falla la API: nunca lanza al flujo de mensajes.
+//   2) Google Sheets, por dos caminos (usa el que configures):
+//      a) SHEETS_WEBHOOK_URL → Apps Script Web App (RECOMENDADO, copiar-pegar).
+//      b) Service account (GOOGLE_SHEET_ID + credenciales) → avanzado.
+//   Se degrada con gracia si falta config o falla la red: nunca lanza al
+//   flujo de mensajes.
 // ============================================================
 
 import { mkdirSync, existsSync, appendFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import axios from 'axios';
 import config from '../../config/bot.config.js';
 import logger from '../utils/logger.js';
 
@@ -55,7 +58,16 @@ export async function saveOrder(record) {
         logger.error('No se pudo guardar el pedido en CSV local:', error.message || error);
     }
 
-    // 2) Google Sheets (nube), solo si está configurado.
+    // 2a) Google Sheets vía Apps Script Web App (camino simple, recomendado).
+    if (config.orders?.sheetWebhookUrl) {
+        try {
+            await postToSheetsWebhook(row);
+        } catch (error) {
+            logger.error('No se pudo enviar el pedido al Apps Script Web App:', error.message || error);
+        }
+    }
+
+    // 2b) Google Sheets vía service account (camino avanzado).
     if (config.orders?.sheetId) {
         try {
             await appendToSheet(row);
@@ -63,6 +75,15 @@ export async function saveOrder(record) {
             logger.error('No se pudo guardar el pedido en Google Sheets:', error.message || error);
         }
     }
+}
+
+// ── Google Sheets vía Apps Script Web App (POST JSON) ──────
+async function postToSheetsWebhook(row) {
+    await axios.post(config.orders.sheetWebhookUrl, row, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
+    });
+    logger.info(`☁️  Boucher enviado a Google Sheets vía Apps Script (pedido #${row.N} - ${row.Cliente})`);
 }
 
 /** Normaliza un record a un objeto plano con las columnas de HEADERS. */

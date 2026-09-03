@@ -62,6 +62,9 @@ export default {
     // en la nube (Google Sheets) para análisis y decisiones.
     orders: {
         csvPath: 'data/pedidos.csv',
+        // Camino simple (recomendado): URL del Apps Script Web App.
+        sheetWebhookUrl: process.env.SHEETS_WEBHOOK_URL || null,
+        // Camino avanzado: service account de Google.
         sheetId: process.env.GOOGLE_SHEET_ID || null,
     },
 
