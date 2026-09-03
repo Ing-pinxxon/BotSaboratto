@@ -45,6 +45,23 @@ function getUserState(senderNumber) {
     return userState.get(senderNumber);
 }
 
+/** Dígitos de un número (sin +, espacios ni símbolos). */
+function onlyDigits(value) {
+    return String(value || '').replace(/\D/g, '');
+}
+
+/**
+ * ¿El número de cocina es la MISMA línea del bot? WhatsApp no permite que
+ * un número se envíe mensajes a sí mismo, así que en ese caso se omite el
+ * envío. Compara los últimos 10 dígitos para tolerar prefijos (57, +57…).
+ */
+function isSameAsBot(kitchenNumber) {
+    const a = onlyDigits(kitchenNumber);
+    const b = onlyDigits(config.contactNumber);
+    if (!a || !b) return false;
+    return a.slice(-10) === b.slice(-10);
+}
+
 /**
  * Al confirmar el cliente: genera la comanda con el último resumen del
  * pedido, la envía al número de cocina (1:1) y guarda el boucher
@@ -64,7 +81,10 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
 
     // ── Enviar comanda a cocina (número 1:1) ──
     const kitchenNumber = config.notifications.forwarding;
-    if (kitchenNumber) {
+    if (kitchenNumber && isSameAsBot(kitchenNumber)) {
+        // WhatsApp no permite auto-envío: la comanda queda solo en el boucher.
+        logger.warn(`👨‍🍳 Comanda #${orderNumber} guardada en boucher (Sheets/CSV). No se envía por WhatsApp: KITCHEN_NUMBER es la misma línea del bot.`);
+    } else if (kitchenNumber) {
         const comanda = buildKitchenComanda({ orderSummary, senderName, senderNumber, orderNumber });
         logger.info(`👨‍🍳 Enviando comanda #${orderNumber} a cocina (${kitchenNumber})...`);
         await sendWhatsAppMessage(kitchenNumber, comanda, phoneNumberId);

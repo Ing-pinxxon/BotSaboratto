@@ -67,6 +67,12 @@ Cada pedido **confirmado** se guarda automáticamente para dejar traza y aliment
   Esta carpeta contiene datos de clientes (PII) y está en `.gitignore` — no se versiona.
 * **Google Sheets (nube, opcional):** si configuras las variables de Google, la misma fila se agrega a una hoja de cálculo en la nube que puedes abrir desde el celular, compartir y analizar.
 
+> **⚠️ Si la cocina usa la MISMA línea de WhatsApp donde corre el bot:** WhatsApp no
+> permite que un número se envíe mensajes a sí mismo, así que la comanda **no** se
+> manda por WhatsApp (deja `KITCHEN_NUMBER` vacío). En ese caso, **Google Sheets es el
+> tablero de cocina en vivo**: cada pedido confirmado aparece como una fila en tiempo
+> real. El envío por WhatsApp solo aplica si la cocina tiene un **número aparte**.
+
 ### Configurar Google Sheets (opcional)
 
 1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto y habilita **Google Sheets API**.
