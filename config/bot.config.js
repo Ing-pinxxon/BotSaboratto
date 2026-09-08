@@ -48,14 +48,24 @@ export default {
         payments: process.env.BOLD_NOTIFY_NUMBER || null,
     },
 
-    // ── Detección de confirmación para reenvío ──
-    // El bot reenvía al número de forwarding cuando la respuesta
-    // de la IA contiene TODOS estos marcadores:
+    // ── Detección del resumen de pedido ──
+    // El bot considera que la IA mostró un pedido con total cuando la
+    // respuesta contiene TODOS estos marcadores. Ese resumen se guarda
+    // y se envía a cocina en el momento en que el cliente confirma.
     forwarding: {
         detectMarkers: ["Total:"],  // Marcadores en la respuesta de IA
-        ignorePatterns: [               // Si el mensaje del cliente tiene esto, NO reenviar
-            /gracias/i, /ok/i, /listo/i, /perfecto/i, /👍/, /si/i, /confirmado/i,
-        ],
+    },
+
+    // ── Guardado de pedidos (boucher / traza) ──
+    // Cada pedido confirmado se guarda SIEMPRE en un CSV local y, si
+    // GOOGLE_SHEET_ID está configurado, también en una hoja de cálculo
+    // en la nube (Google Sheets) para análisis y decisiones.
+    orders: {
+        csvPath: 'data/pedidos.csv',
+        // Camino simple (recomendado): URL del Apps Script Web App.
+        sheetWebhookUrl: process.env.SHEETS_WEBHOOK_URL || null,
+        // Camino avanzado: service account de Google.
+        sheetId: process.env.GOOGLE_SHEET_ID || null,
     },
 
     // ── Cierre y desactivación tras confirmación ──
