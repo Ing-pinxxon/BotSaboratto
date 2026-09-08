@@ -84,6 +84,10 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
     if (kitchenNumber && isSameAsBot(kitchenNumber)) {
         // WhatsApp no permite auto-envío: la comanda queda solo en el boucher.
         logger.warn(`👨‍🍳 Comanda #${orderNumber} guardada en boucher (Sheets/CSV). No se envía por WhatsApp: KITCHEN_NUMBER es la misma línea del bot.`);
+    } else if (kitchenNumber && process.env.ZERNIO_API_KEY) {
+        // Zernio solo responde dentro de una conversación existente, no a un
+        // número arbitrario. La comanda queda en el boucher (Sheets/CSV).
+        logger.warn(`👨‍🍳 Comanda #${orderNumber} guardada en boucher. Envío a cocina omitido: Zernio no reenvía a un número aparte (usa el tablero de Google Sheets).`);
     } else if (kitchenNumber) {
         const comanda = buildKitchenComanda({ orderSummary, senderName, senderNumber, orderNumber });
         logger.info(`👨‍🍳 Enviando comanda #${orderNumber} a cocina (${kitchenNumber})...`);
@@ -153,6 +157,52 @@ router.post('/', validateWebhookPayload, async (req, res) => {
         const body = req.body;
         logger.debug("📥 Datos recibidos en Webhook:", JSON.stringify(body, null, 2));
 
+        // ── Parseo Zernio (proveedor oficial) ──
+        // Estructura real:
+        //   { event, message: { direction, text, sender: { phoneNumber, name } },
+        //     conversation: { participantId, participantUsername } }
+        const zMsg = (body?.message && typeof body.message === 'object' && !Array.isArray(body.message))
+            ? body.message
+            : null;
+        const isZernio = !!(body?.event || body?.conversation || (zMsg && zMsg.direction !== undefined));
+        if (isZernio) {
+            // Solo procesar mensajes ENTRANTES reales. Ignorar salientes (evita que
+            // el bot se responda a sí mismo) y eventos de estado (delivered/read/sent).
+            const dir = String(zMsg?.direction || "").toLowerCase();
+            if (!zMsg || dir !== "incoming") {
+                logger.debug(`Webhook Zernio ignorado: evento "${body?.event}", direction "${dir}".`);
+                return;
+            }
+
+            const zText = typeof zMsg.text === "string" ? zMsg.text : zMsg.text?.body;
+            const zFrom = String(
+                zMsg.sender?.phoneNumber
+                || body?.conversation?.participantId
+                || body?.conversation?.participantUsername
+                || zMsg.sender?.id
+                || ""
+            ).replace(/^\+/, "");
+            const zName = zMsg.sender?.name || body?.conversation?.participantName || "Cliente";
+
+            if (!zText || !zFrom) {
+                logger.debug("Webhook Zernio ignorado: sin texto o número de remitente.");
+                return;
+            }
+
+            // Datos necesarios para responder por Zernio (envío por conversación).
+            const zConversationId = zMsg.conversationId || body?.conversation?.id;
+            const zAccountId = body?.account?.id || body?.account?.accountId;
+
+            logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
+            messageBuffer.add(zFrom, zText, {
+                senderName: zName,
+                phoneNumberId: "",
+                zernioConversationId: zConversationId,
+                zernioAccountId: zAccountId,
+            });
+            return;
+        }
+
         let incomingMessages = [];
         let senderName = "Cliente";
         let phoneNumberId = "";
@@ -207,7 +257,8 @@ router.post('/', validateWebhookPayload, async (req, res) => {
 // ============================================================
 async function processBuffer(senderNumber, fragments, meta) {
     const combinedText = fragments.join("\n");
-    const { senderName, phoneNumberId } = meta;
+    const { senderName, phoneNumberId, zernioConversationId, zernioAccountId } = meta;
+    const zernio = { conversationId: zernioConversationId, accountId: zernioAccountId };
     const state = getUserState(senderNumber);
 
     // ── 1. Cliente ya confirmó su pedido hoy → ignorar por completo ──
@@ -220,7 +271,7 @@ async function processBuffer(senderNumber, fragments, meta) {
     if (isClientConfirming(combinedText)) {
         const closing = config.confirmationBlock.closingMessage;
         logger.info(`✅ ${senderName} (${senderNumber}) confirmó. Enviando cierre y desactivando.`);
-        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId);
+        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId, zernio);
         chatHistory.add(senderNumber, combinedText, closing);
         state.pendingConfirmation = false;
         state.confirmedDate = getBusinessDate();
@@ -246,7 +297,7 @@ async function processBuffer(senderNumber, fragments, meta) {
     logger.info(`✅ Respuesta Gemini: ${aiReply}`);
 
     // ── Enviar al cliente ──
-    await sendWhatsAppMessage(senderNumber, aiReply, phoneNumberId);
+    await sendWhatsAppMessage(senderNumber, aiReply, phoneNumberId, zernio);
 
     // ── Actualizar historial ──
     chatHistory.add(senderNumber, combinedText, aiReply);
