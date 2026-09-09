@@ -120,7 +120,10 @@ function isClientConfirming(text) {
     if (!confirmationBlock) return false;
     const trimmed = text.trim();
     if (trimmed.length > confirmationBlock.maxLength) return false;
-    return confirmationBlock.patterns.some(pattern => pattern.test(trimmed));
+    // Quitar acentos para que "sí", "señor", "confirmó" también coincidan
+    // (el \b de la regex no funciona bien con caracteres acentuados).
+    const normalized = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return confirmationBlock.patterns.some(pattern => pattern.test(normalized));
 }
 
 // ── Buffer con callback de procesamiento ──
@@ -267,8 +270,11 @@ async function processBuffer(senderNumber, fragments, meta) {
         return;
     }
 
-    // ── 2. ¿Cliente está confirmando (dice ok, listo, confirmado, etc.)? ──
-    if (isClientConfirming(combinedText)) {
+    // ── 2. ¿Cliente confirma un pedido que YA tiene total mostrado? ──
+    // Solo se toma como confirmación si hay un pedido pendiente (la IA ya
+    // mostró el Total). Así, aclaraciones cortas como "Sí, la tradicional"
+    // NO cierran el pedido en falso: siguen el flujo normal con la IA.
+    if (state.pendingConfirmation && isClientConfirming(combinedText)) {
         const closing = config.confirmationBlock.closingMessage;
         logger.info(`✅ ${senderName} (${senderNumber}) confirmó. Enviando cierre y desactivando.`);
         await sendWhatsAppMessage(senderNumber, closing, phoneNumberId, zernio);
