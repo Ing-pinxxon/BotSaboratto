@@ -9,6 +9,7 @@ import { buildKitchenComanda, extractItems, parseOrderAmounts } from '../../conf
 import { generateResponse } from '../services/ai.service.js';
 import { sendWhatsAppMessage } from '../services/whatsapp.service.js';
 import { saveOrder, nextOrderNumber } from '../services/orders.service.js';
+import { crearPedidoDesdeResumen } from '../services/comandas.service.js';
 import { getBusinessContext } from '../services/schedule.service.js';
 import { MessageBuffer } from '../utils/buffer.js';
 import { ChatHistory } from '../utils/history.js';
@@ -64,8 +65,9 @@ function isSameAsBot(kitchenNumber) {
 
 /**
  * Al confirmar el cliente: genera la comanda con el último resumen del
- * pedido, la envía al número de cocina (1:1) y guarda el boucher
- * (CSV local + Google Sheets). No hace nada si no hubo un pedido con total.
+ * pedido, la envía al número de cocina (1:1), guarda el boucher
+ * (CSV local + Google Sheets) y lo publica en la pantalla de comandas.
+ * No hace nada si no hubo un pedido con total.
  */
 async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNumberId }) {
     const orderSummary = state.lastOrderSummary;
@@ -112,6 +114,13 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
         diaSemana: now.toLocaleDateString('es-CO', { weekday: 'long', timeZone: config.timezone }),
         rawSummary: orderSummary,
     });
+
+    // ── Publicar en la pantalla de comandas (Supabase) ──
+    // Entra marcado como "sin revisar" para que el personal lo apruebe.
+    // No se espera la respuesta: si algo falla, el pedido igual quedó en el
+    // boucher y en la comanda de cocina.
+    crearPedidoDesdeResumen({ resumen: orderSummary, senderName, senderNumber })
+        .catch(error => logger.error('No se pudo publicar en la pantalla de comandas:', error.message || error));
 }
 
 /** ¿El mensaje del cliente es una confirmación corta? */
