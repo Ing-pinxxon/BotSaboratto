@@ -7,6 +7,7 @@
 // Variables de entorno necesarias:
 //   COMANDAS_SUPABASE_URL          → https://xxxx.supabase.co
 //   COMANDAS_SERVICE_KEY           → service_role key del proyecto
+//   COMANDAS_CLAVE_NEGOCIO         → clave de integración (Comandapp → Mi negocio)
 // Si faltan, el bot sigue funcionando igual y solo registra un aviso.
 // ============================================================
 
@@ -20,10 +21,13 @@ dotenv.config();
 
 const SUPABASE_URL = process.env.COMANDAS_SUPABASE_URL;
 const SERVICE_KEY = process.env.COMANDAS_SERVICE_KEY;
+// Clave de integración del negocio (se copia de Comandapp → Mi negocio).
+// Desde que Comandapp es multinegocio, identifica a qué cola van los pedidos.
+const CLAVE_NEGOCIO = process.env.COMANDAS_CLAVE_NEGOCIO;
 
 /** ¿Está configurada la conexión con la app de comandas? */
 export function comandasHabilitado() {
-    return Boolean(SUPABASE_URL && SERVICE_KEY);
+    return Boolean(SUPABASE_URL && SERVICE_KEY && CLAVE_NEGOCIO);
 }
 
 const api = () => axios.create({
@@ -39,14 +43,28 @@ const api = () => axios.create({
 // ── Catálogo en memoria (se refresca cada 10 minutos) ──
 let catalogoCache = null;
 let catalogoExpira = 0;
+let negocioIdCache = null;
 
-/** Lee productos y categorías de la app de comandas. */
+/** Resuelve el id del negocio a partir de su clave de integración (una sola vez). */
+async function obtenerNegocioId() {
+    if (negocioIdCache) return negocioIdCache;
+    const { data } = await api().post('/rpc/negocio_por_clave', { p_clave: CLAVE_NEGOCIO });
+    const fila = Array.isArray(data) ? data[0] : data;
+    if (!fila?.id) throw new Error('La clave de integración (COMANDAS_CLAVE_NEGOCIO) no corresponde a ningún negocio');
+    if (fila.activo === false) throw new Error(`El negocio "${fila.nombre}" está desactivado en Comandapp`);
+    negocioIdCache = fila.id;
+    logger.info(`🏪 Comandas conectado al negocio "${fila.nombre}"`);
+    return negocioIdCache;
+}
+
+/** Lee productos y categorías del negocio en la app de comandas. */
 async function obtenerCatalogo() {
     if (catalogoCache && Date.now() < catalogoExpira) return catalogoCache;
 
+    const negocioId = await obtenerNegocioId();
     const [productos, categorias] = await Promise.all([
-        api().get('/productos', { params: { select: 'id,nombre,precio,precio_combo,categoria_id,activo,ingredientes', activo: 'eq.true' } }),
-        api().get('/categorias', { params: { select: 'id,nombre,lleva_icopor,permite_combo' } }),
+        api().get('/productos', { params: { select: 'id,nombre,precio,precio_combo,categoria_id,activo,ingredientes', activo: 'eq.true', negocio_id: `eq.${negocioId}` } }),
+        api().get('/categorias', { params: { select: 'id,nombre,permite_combo', negocio_id: `eq.${negocioId}` } }),
     ]);
 
     const porId = new Map(categorias.data.map(c => [c.id, c]));
@@ -180,7 +198,7 @@ const METODOS_VALIDOS = ['efectivo', 'nequi', 'daviplata', 'breb', 'otro'];
  */
 export async function crearPedidoDesdeResumen({ resumen, senderName, senderNumber }) {
     if (!comandasHabilitado()) {
-        logger.debug('Comandas no configurado (faltan COMANDAS_SUPABASE_URL / COMANDAS_SERVICE_KEY)');
+        logger.debug('Comandas no configurado (faltan COMANDAS_SUPABASE_URL / COMANDAS_SERVICE_KEY / COMANDAS_CLAVE_NEGOCIO)');
         return null;
     }
 
@@ -193,6 +211,7 @@ export async function crearPedidoDesdeResumen({ resumen, senderName, senderNumbe
 
         const cuerpo = {
             p_pedido: {
+                negocio_clave: CLAVE_NEGOCIO,
                 cliente_nombre: (senderName || 'Cliente WhatsApp').trim(),
                 cliente_telefono: String(senderNumber || '').replace(/\D/g, ''),
                 metodo_pago: metodo,
