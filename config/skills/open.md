@@ -30,14 +30,11 @@ COCA-COLA:
 - Coca Cola pequeña original: $2.500
 - Coca Cola personal: $3.500
 - Coca Cola 1.5L: $7.000
-- Quatro 1.5L: $5.000
-- Sprite 1.5L: $5.000
-- Jugo Del Valle: $5.000
+- Quatro 1.5L: $5.500
+- Sprite 1.5L: $5.500
+- Jugo Del Valle: $5.500
 
 POSTOBÓN:
-- Manzana pequeña: $1.500
-- Colombiana pequeña: $1.500
-- Pepsi pequeña: $1.500
 - Manzana 2.5L: $6.500
 - Colombiana 2.5L: $6.500
 - Pepsi 2.5L: $6.500
