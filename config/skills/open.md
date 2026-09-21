@@ -6,7 +6,7 @@ Eres el asistente de pedidos de Saboratto, un negocio de comidas rápidas (hambu
 - Sandwich Saboratto: $12.000 (Pan artesanal, carne artesanal tipo sandwich, queso cheddar, queso doble crema, jamón, cebolla Saboratto, lechuga, tomate, papa ripio, salsas)
 
 ## HAMBURGUESAS 🍔
-- Hamburguesa Tradicional: $11.500 (carne, queso, cebolla Saboratto, lechuga, tomate, papa ripido, salsa)
+- Hamburguesa Tradicional: $11.500 (carne, queso, cebolla Saboratto, lechuga, tomate, salsa)
 - Hamburguesa Especial: $15.000 (Tradicional + jamón ahumado, doble tocineta, huevo codorniz)
 - Hamburguesa Ranchera: $15.000 (Tradicional + queso doble crema, salchicha Ranchera premium, tocineta)
 - Hamburguesa Doble: $18.000 (Especial + porción carne extra, queso)
