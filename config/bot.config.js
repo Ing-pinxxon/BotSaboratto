@@ -31,6 +31,30 @@ export default {
         // (el horario público de Saboratto cierra 30 min después del bot)
     },
 
+    // ── Control manual del bot (pausar/activar por WhatsApp) ──
+    // Tú (el dueño) controlas el bot enviándole una palabra clave desde
+    // tu WhatsApp personal al número del bot. Un cliente normal nunca
+    // escribiría estas frases pidiendo comida.
+    adminControl: {
+        // Números autorizados a controlar el bot (tu WhatsApp personal).
+        // Se leen de ADMIN_NUMBERS en las variables de entorno, separados
+        // por coma. Ej: ADMIN_NUMBERS=573001112233,573004445566
+        // Si queda vacío, CUALQUIERA que sepa la palabra clave podría
+        // controlar el bot (menos seguro). Recomendado: pon tu número.
+        adminNumbers: (process.env.ADMIN_NUMBERS || '')
+            .split(',')
+            .map(n => n.replace(/\D/g, ''))
+            .filter(Boolean),
+        // Palabras clave (no distinguen mayúsculas ni acentos).
+        pauseKeyword: 'pausar bot',
+        resumeKeyword: 'activar bot',
+        statusKeyword: 'estado bot',
+        // Qué responder a los clientes mientras el bot está pausado.
+        // null = el bot NO responde nada (tú atiendes manualmente).
+        // O pon un texto, ej: "Dame un momento, en seguida te atiendo. 🙌"
+        pausedCustomerReply: null,
+    },
+
     // ── Datos de pago ──
     payment: {
         methods: ["Bre-B", "Nequi", "Daviplata"],

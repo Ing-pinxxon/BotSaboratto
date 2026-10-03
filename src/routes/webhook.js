@@ -14,6 +14,7 @@ import { getBusinessContext } from '../services/schedule.service.js';
 import { MessageBuffer } from '../utils/buffer.js';
 import { ChatHistory } from '../utils/history.js';
 import { validateWebhookPayload } from '../middleware/validation.js';
+import { isPaused, setPause, getState } from '../utils/botState.js';
 import logger from '../utils/logger.js';
 
 dotenv.config();
@@ -123,6 +124,68 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
         .catch(error => logger.error('No se pudo publicar en la pantalla de comandas:', error.message || error));
 }
 
+/** Normaliza texto para comparar palabras clave (minúsculas, sin acentos, espacios colapsados). */
+function normalizeKeyword(text) {
+    return String(text || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, ' ');
+}
+
+/** Devuelve 'pause' | 'resume' | 'status' si el texto es un comando admin, o null. */
+function matchAdminCommand(text) {
+    const ac = config.adminControl;
+    if (!ac) return null;
+    const t = normalizeKeyword(text);
+    if (t === normalizeKeyword(ac.pauseKeyword)) return 'pause';
+    if (t === normalizeKeyword(ac.resumeKeyword)) return 'resume';
+    if (t === normalizeKeyword(ac.statusKeyword)) return 'status';
+    return null;
+}
+
+/**
+ * Procesa un comando del administrador (pausar/activar/estado) enviado por
+ * WhatsApp. Devuelve true si el mensaje era un comando admin (y ya se atendió),
+ * para que NO se procese como pedido de un cliente.
+ */
+async function tryAdminCommand({ text, from, phoneNumberId, zernio }) {
+    const command = matchAdminCommand(text);
+    if (!command) return false;
+
+    // ── Autorización ──
+    // Si hay números admin configurados, exigir que el remitente sea uno de
+    // ellos (se comparan los últimos 10 dígitos para tolerar prefijos 57/+57).
+    const admins = config.adminControl.adminNumbers || [];
+    if (admins.length > 0) {
+        const f = onlyDigits(from);
+        const allowed = admins.some(a => a.slice(-10) === f.slice(-10));
+        if (!allowed) {
+            logger.warn(`🚫 Comando "${text}" de ${from} ignorado: número no autorizado.`);
+            return false; // no es admin → sigue el flujo normal (cliente)
+        }
+    } else {
+        logger.warn('⚠️ ADMIN_NUMBERS no está configurado: el comando se aceptó solo por palabra clave. Configura ADMIN_NUMBERS para mayor seguridad.');
+    }
+
+    let replyText;
+    if (command === 'pause') {
+        setPause(true);
+        replyText = `⏸️ Bot PAUSADO. No responderá a los clientes hasta que envíes "${config.adminControl.resumeKeyword}".`;
+    } else if (command === 'resume') {
+        setPause(false);
+        replyText = '▶️ Bot ACTIVADO. Ya está respondiendo a los clientes normalmente.';
+    } else {
+        replyText = isPaused()
+            ? `📊 Estado: ⏸️ PAUSADO. Envía "${config.adminControl.resumeKeyword}" para reanudar.`
+            : '📊 Estado: ▶️ ACTIVO, respondiendo normalmente.';
+    }
+
+    await sendWhatsAppMessage(from, replyText, phoneNumberId, zernio);
+    logger.info(`🔧 Comando admin "${command}" de ${from}.`);
+    return true;
+}
+
 /** ¿El mensaje del cliente es una confirmación corta? */
 function isClientConfirming(text) {
     const { confirmationBlock } = config;
@@ -204,6 +267,12 @@ router.post('/', validateWebhookPayload, async (req, res) => {
             // Datos necesarios para responder por Zernio (envío por conversación).
             const zConversationId = zMsg.conversationId || body?.conversation?.id;
             const zAccountId = body?.account?.id || body?.account?.accountId;
+            const zernio = { conversationId: zConversationId, accountId: zAccountId };
+
+            // ── Comando del administrador (pausar/activar/estado) ──
+            if (await tryAdminCommand({ text: zText, from: zFrom, phoneNumberId: "", zernio })) {
+                return;
+            }
 
             logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
             messageBuffer.add(zFrom, zText, {
@@ -254,6 +323,11 @@ router.post('/', validateWebhookPayload, async (req, res) => {
             return;
         }
 
+        // ── Comando del administrador (pausar/activar/estado) ──
+        if (await tryAdminCommand({ text: textChunk, from: senderNumber, phoneNumberId, zernio: {} })) {
+            return;
+        }
+
         logger.info(`💬 Fragmento de ${senderName} (${senderNumber}): ${textChunk}`);
 
         // ── Acumular en buffer ──
@@ -272,6 +346,16 @@ async function processBuffer(senderNumber, fragments, meta) {
     const { senderName, phoneNumberId, zernioConversationId, zernioAccountId } = meta;
     const zernio = { conversationId: zernioConversationId, accountId: zernioAccountId };
     const state = getUserState(senderNumber);
+
+    // ── 0. Bot pausado por el administrador → no atender clientes ──
+    if (isPaused()) {
+        const reply = config.adminControl?.pausedCustomerReply;
+        if (reply) {
+            await sendWhatsAppMessage(senderNumber, reply, phoneNumberId, zernio);
+        }
+        logger.info(`⏸️ Bot pausado. Mensaje de ${senderName} (${senderNumber}) no procesado.`);
+        return;
+    }
 
     // ── 1. Cliente ya confirmó su pedido hoy → ignorar por completo ──
     if (state.confirmedDate === getBusinessDate()) {
