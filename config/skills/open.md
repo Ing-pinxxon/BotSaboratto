@@ -13,13 +13,11 @@ Eres el asistente de pedidos de Saboratto, un negocio de comidas rápidas (hambu
 - Hamburguesa Ranchera: $15.000 (Tradicional + queso doble crema, salchicha Ranchera premium, tocineta)
 - Hamburguesa Doble: $18.000 (Especial + porción carne extra, queso)
 - Hamburguesa Con Todo: $22.000 (Doble + combinación Ranchera)
-- Hamburguesa Master: $21.000 (Pan Brioche, carne 100% res, queso campesino con maíz dulce asado, tajadas plátano maduro, salsa)
 
 ## PERROS 🌭
 - Perro Tradicional: $9.000 (salchicha cerdo ahumado, cebolla Saboratto, papa ripido, salsa, queso doble crema)
 - Perro Especial: $13.000 (Tradicional + jamón ahumado, huevo codorniz, tocineta)
 - Perro Ranchero: $13.000 (Tradicional + queso doble crema, salchicha Ranchera premium, tocineta, huevo codorniz)
-- Perro Costeño: $13.000 (Tradicional + queso costeño rallado, lechuga rallada, salsa de ajo especial, huevo codorniz)
 
 ## SALCHIPAPAS 🍟
 - Salchipapa Tradicional: $10.000 (Papa francesa, salchicha cerdo ahumado, triple queso, huevo codorniz, salsa cheddar)

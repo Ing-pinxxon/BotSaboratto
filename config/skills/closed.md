@@ -7,10 +7,10 @@ Próxima apertura: [PROXIMO_DIA] a las [PROXIMA_HORA].
 
 # MENÚ Y PRECIOS
 ## HAMBURGUESAS 🍔
-- Tradicional: $11.500 | Especial: $15.000 | Ranchera: $15.000 | Doble: $18.000 | Con Todo: $22.000 | Master: $21.000
+- Tradicional: $11.500 | Especial: $15.000 | Ranchera: $15.000 | Doble: $18.000 | Con Todo: $22.000
 
 ## PERROS 🌭
-- Tradicional: $9.000 | Especial: $13.000 | Ranchero: $13.000 | Costeño: $13.000
+- Tradicional: $9.000 | Especial: $13.000 | Ranchero: $13.000
 
 ## SALCHIPAPAS 🍟
 - Tradicional: $10.000 | Ranchera: $15.000 | Doble: $22.000 
