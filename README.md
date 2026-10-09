@@ -1,24 +1,26 @@
-# 🍔 Saboratto AI Bot (Kapso + Google Gemini)
+# 🍔 Saboratto AI Bot (Zernio + Google Gemini)
 
-Este proyecto es un bot inteligente para WhatsApp diseñado para **Saboratto**, un negocio de comidas rápidas. Funciona integrando **Kapso** (como puente y proveedor del webhook de WhatsApp) y la API de **Google Gemini** para dotar al bot de inteligencia artificial conversacional.
+Este proyecto es un bot inteligente para WhatsApp diseñado para **Saboratto**, un negocio de comidas rápidas. Funciona integrando **Zernio** (proveedor oficial de WhatsApp: webhook entrante y envío de mensajes) y la API de **Google Gemini** para dotar al bot de inteligencia artificial conversacional.
 
-El bot no solo responde preguntas, sino que está entrenado para tomar pedidos complejos, sumar precios, cobrar adicionales (como icopor o papas) y enviar un resumen limpio directamente al WhatsApp de la cocina.
+El bot no solo responde preguntas, sino que está entrenado para tomar pedidos complejos, sumar precios, cobrar adicionales (como icopor o papas) y dejar cada pedido confirmado en el boucher y la pantalla de comandas.
 
 ## ✨ Características Principales
 
-* **🤖 Inteligencia Artificial:** Usa `gemini-2.5-flash-lite` (o versiones superiores) para comprender lenguaje natural, lidiar con audios transcritos por Kapso y atender a los clientes de forma empática.
+* **🤖 Inteligencia Artificial:** Usa `gemini-2.5-flash-lite` (o versiones superiores) para comprender lenguaje natural, y atender a los clientes de forma empática.
 * **🕒 Horarios Dinámicos:** Cambia su comportamiento automáticamente (zona horaria `America/Bogota`).
   * *Modo Abierto:* Toma pedidos y calcula totales.
   * *Modo Cerrado:* Brinda información del menú y responde preguntas sobre ubicación, pero se niega educadamente a tomar pedidos, avisando la hora de apertura.
   * *Cierre Preventivo:* La lógica interna cierra el bot 30 minutos antes del horario oficial de cierre al público para evitar pedidos de última hora en cocina.
 * **⏳ Buffer Anti-Spam (Debounce):** Si el cliente manda 5 mensajes separados por palabra (ej. "Hola", "quiero", "una", "hamburguesa"), el bot los acumula en un buffer durante 10 segundos antes de procesarlos como un solo pedido.
-* **👨‍🍳 Comanda de Cocina + Boucher:** Cuando el cliente **confirma** su pedido (el bot muestra "¿Me confirmas? ✅" y el cliente dice "Sí/listo"), en ese mismo momento el bot: (1) arma una **comanda con el nombre del cliente** en formato de cocina y la envía al número de WhatsApp de la cocina (número **1:1**, ya que la API de WhatsApp no envía a grupos), y (2) guarda el pedido como **boucher/traza** en un CSV local (`data/pedidos.csv`) y, opcionalmente, en una **hoja de cálculo de Google Sheets** en la nube para análisis y decisiones. El diseño queda listo para conectar una impresora térmica más adelante.
+* **👨‍🍳 Boucher + Pantalla de Comandas:** Cuando el cliente **confirma** su pedido (el bot muestra "¿Me confirmas? ✅" y el cliente dice "Sí/listo"), el bot guarda el pedido como **boucher/traza** en un CSV local (`data/pedidos.csv`), opcionalmente en **Google Sheets**, y lo publica en la **pantalla de comandas**.
+* **🖼️ Menú en imágenes:** Si el cliente pide el menú, el bot le envía las imágenes de `public/menu/` (`menu-1.jpg`, `menu-2.jpg`), servidas en `https://<dominio>/menu/...`.
+* **⏸️ Pausa manual:** El dueño pausa/activa el bot escribiéndole `pausar bot` / `activar bot` / `estado bot` desde un número de `ADMIN_NUMBERS`.
 
 ## 🛠️ Tecnologías
 
 * **Node.js** v18+
 * **Express.js** (Servidor Webhook)
-* **Axios** (Peticiones HTTP a Kapso)
+* **Axios** (Peticiones HTTP a Zernio)
 * **@google/generative-ai** (SDK oficial de Gemini)
 * **dotenv** (Variables de entorno)
 * **pm2** (Gestor de procesos para producción)
@@ -40,10 +42,9 @@ El bot no solo responde preguntas, sino que está entrenado para tomar pedidos c
    Crea un archivo `.env` en la raíz del proyecto (usa `.env.example` como base) y añade:
    ```env
    PORT=3000
-   KAPSO_API_KEY=tu_api_key_de_kapso
-   KAPSO_PROJECT_ID=tu_project_id_de_kapso
+   ZERNIO_API_KEY=sk_tu_api_key_de_zernio
    GEMINI_API_KEY=tu_api_key_de_google_aistudio
-   KITCHEN_NUMBER=573000000000 # Número 1:1 de WhatsApp de la cocina (NO un grupo)
+   ADMIN_NUMBERS=573000000000 # Tu WhatsApp personal (pausar/activar el bot)
    ```
 
 4. **Iniciar el Servidor en Desarrollo**
@@ -52,11 +53,11 @@ El bot no solo responde preguntas, sino que está entrenado para tomar pedidos c
    ```
 
 5. **Exponer el Webhook (Localtunnel)**
-   Para que Kapso pueda enviarte mensajes mientras desarrollas localmente, abre otra terminal y ejecuta:
+   Para que Zernio pueda enviarte mensajes mientras desarrollas localmente, abre otra terminal y ejecuta:
    ```bash
    npm run tunnel
    ```
-   Copia la URL pública generada (ej. `https://agente-saboratto-gemi.loca.lt/webhook`) y pégala en la configuración de Webhooks de tu proyecto en Kapso.
+   Copia la URL pública generada (ej. `https://agente-saboratto-gemi.loca.lt/webhook`) y pégala en la configuración de Webhooks de tu cuenta de Zernio.
 
 ## 🧾 Boucher / Traza de Pedidos
 
@@ -67,11 +68,9 @@ Cada pedido **confirmado** se guarda automáticamente para dejar traza y aliment
   Esta carpeta contiene datos de clientes (PII) y está en `.gitignore` — no se versiona.
 * **Google Sheets (nube, opcional):** si configuras las variables de Google, la misma fila se agrega a una hoja de cálculo en la nube que puedes abrir desde el celular, compartir y analizar.
 
-> **⚠️ Si la cocina usa la MISMA línea de WhatsApp donde corre el bot:** WhatsApp no
-> permite que un número se envíe mensajes a sí mismo, así que la comanda **no** se
-> manda por WhatsApp (deja `KITCHEN_NUMBER` vacío). En ese caso, **Google Sheets es el
-> tablero de cocina en vivo**: cada pedido confirmado aparece como una fila en tiempo
-> real. El envío por WhatsApp solo aplica si la cocina tiene un **número aparte**.
+> **ℹ️ Comanda de cocina:** Zernio solo responde dentro de la conversación del cliente,
+> así que la comanda **no** se envía por WhatsApp a otro número. Google Sheets y la
+> pantalla de comandas son el **tablero de cocina en vivo**.
 
 ### Configurar Google Sheets — Camino recomendado (Apps Script, copiar-pegar)
 

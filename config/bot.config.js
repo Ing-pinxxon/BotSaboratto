@@ -55,21 +55,22 @@ export default {
         pausedCustomerReply: null,
     },
 
+    // ── Menú en imágenes ──
+    // Cuando el cliente pide el menú, la IA responde con el marcador y el
+    // bot envía estas imágenes (guardadas en public/menu/ del repo).
+    // WhatsApp acepta JPG o PNG de máximo 5 MB.
+    menuImages: {
+        // Dominio público del bot en Railway (Settings → Networking).
+        publicBaseUrl: process.env.PUBLIC_BASE_URL || 'https://botsaboratto.up.railway.app',
+        files: ['menu-1.jpg', 'menu-2.jpg'],
+        marker: '[ENVIAR_MENU]',
+    },
+
     // ── Datos de pago ──
     payment: {
         methods: ["Bre-B", "Nequi", "Daviplata"],
         key: "0091675012",
         holder: "Daniel Felipe Pinzón Rodríguez",
-    },
-
-    // ── Números de notificación ──
-    // Estos se leen de variables de entorno para seguridad.
-    // Si no existen en .env, quedan null y no se envían notificaciones.
-    notifications: {
-        // Número al que se reenvían confirmaciones (antes "cocina")
-        forwarding: process.env.KITCHEN_NUMBER || null,
-        // Número al que se notifican pagos
-        payments: process.env.BOLD_NOTIFY_NUMBER || null,
     },
 
     // ── Detección del resumen de pedido ──

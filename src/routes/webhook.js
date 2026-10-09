@@ -1,13 +1,16 @@
 // ============================================================
-// RUTAS: WEBHOOK (GET + POST)
+// RUTAS: WEBHOOK (Zernio)
 // ============================================================
 
 import { Router } from 'express';
 import dotenv from 'dotenv';
+import { existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import config from '../../config/bot.config.js';
-import { buildKitchenComanda, extractItems, parseOrderAmounts } from '../../config/hooks.js';
+import { extractItems, parseOrderAmounts } from '../../config/hooks.js';
 import { generateResponse } from '../services/ai.service.js';
-import { sendWhatsAppMessage } from '../services/whatsapp.service.js';
+import { sendWhatsAppMessage, sendWhatsAppImage } from '../services/whatsapp.service.js';
 import { saveOrder, nextOrderNumber } from '../services/orders.service.js';
 import { crearPedidoDesdeResumen } from '../services/comandas.service.js';
 import { getBusinessContext } from '../services/schedule.service.js';
@@ -52,25 +55,32 @@ function onlyDigits(value) {
     return String(value || '').replace(/\D/g, '');
 }
 
+// ── Menú en imágenes ──
+const MENU_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'menu');
+
 /**
- * ¿El número de cocina es la MISMA línea del bot? WhatsApp no permite que
- * un número se envíe mensajes a sí mismo, así que en ese caso se omite el
- * envío. Compara los últimos 10 dígitos para tolerar prefijos (57, +57…).
+ * Envía las imágenes del menú configuradas en bot.config.js (menuImages).
+ * Las que no existan en public/menu/ se omiten con un aviso en el log.
  */
-function isSameAsBot(kitchenNumber) {
-    const a = onlyDigits(kitchenNumber);
-    const b = onlyDigits(config.contactNumber);
-    if (!a || !b) return false;
-    return a.slice(-10) === b.slice(-10);
+async function sendMenuImages(senderNumber, zernio) {
+    const { publicBaseUrl, files } = config.menuImages;
+    const base = publicBaseUrl.replace(/\/+$/, '');
+    for (const file of files) {
+        if (!existsSync(join(MENU_DIR, file))) {
+            logger.warn(`🖼️ Imagen del menú no encontrada: public/menu/${file}. Súbela al repo para que se envíe.`);
+            continue;
+        }
+        await sendWhatsAppImage(senderNumber, `${base}/menu/${encodeURIComponent(file)}`, '', zernio);
+    }
 }
 
 /**
- * Al confirmar el cliente: genera la comanda con el último resumen del
- * pedido, la envía al número de cocina (1:1), guarda el boucher
- * (CSV local + Google Sheets) y lo publica en la pantalla de comandas.
- * No hace nada si no hubo un pedido con total.
+ * Al confirmar el cliente: guarda el boucher (CSV local + Google Sheets)
+ * y lo publica en la pantalla de comandas. Con Zernio no se puede enviar
+ * la comanda por WhatsApp a un número aparte (solo se responde dentro de
+ * la conversación del cliente). No hace nada si no hubo un pedido con total.
  */
-async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNumberId }) {
+async function dispatchConfirmedOrder({ state, senderName, senderNumber }) {
     const orderSummary = state.lastOrderSummary;
     if (!orderSummary) return;   // el cliente confirmó sin un pedido con total
     state.lastOrderSummary = null;  // evitar duplicar el mismo pedido
@@ -82,22 +92,7 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
         hour: '2-digit', minute: '2-digit', hour12: false, timeZone: config.timezone,
     });
 
-    // ── Enviar comanda a cocina (número 1:1) ──
-    const kitchenNumber = config.notifications.forwarding;
-    if (kitchenNumber && isSameAsBot(kitchenNumber)) {
-        // WhatsApp no permite auto-envío: la comanda queda solo en el boucher.
-        logger.warn(`👨‍🍳 Comanda #${orderNumber} guardada en boucher (Sheets/CSV). No se envía por WhatsApp: KITCHEN_NUMBER es la misma línea del bot.`);
-    } else if (kitchenNumber && process.env.ZERNIO_API_KEY) {
-        // Zernio solo responde dentro de una conversación existente, no a un
-        // número arbitrario. La comanda queda en el boucher (Sheets/CSV).
-        logger.warn(`👨‍🍳 Comanda #${orderNumber} guardada en boucher. Envío a cocina omitido: Zernio no reenvía a un número aparte (usa el tablero de Google Sheets).`);
-    } else if (kitchenNumber) {
-        const comanda = buildKitchenComanda({ orderSummary, senderName, senderNumber, orderNumber });
-        logger.info(`👨‍🍳 Enviando comanda #${orderNumber} a cocina (${kitchenNumber})...`);
-        await sendWhatsAppMessage(kitchenNumber, comanda, phoneNumberId);
-    } else {
-        logger.warn('KITCHEN_NUMBER no configurado: la comanda solo se guarda, no se envía por WhatsApp.');
-    }
+    logger.info(`👨‍🍳 Comanda #${orderNumber} de ${senderName} guardada en boucher y pantalla de comandas.`);
 
     // ── Guardar boucher (traza) ──
     const amounts = parseOrderAmounts(orderSummary);
@@ -119,7 +114,7 @@ async function dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNu
     // ── Publicar en la pantalla de comandas (Supabase) ──
     // Entra marcado como "sin revisar" para que el personal lo apruebe.
     // No se espera la respuesta: si algo falla, el pedido igual quedó en el
-    // boucher y en la comanda de cocina.
+    // boucher.
     crearPedidoDesdeResumen({ resumen: orderSummary, senderName, senderNumber })
         .catch(error => logger.error('No se pudo publicar en la pantalla de comandas:', error.message || error));
 }
@@ -149,7 +144,7 @@ function matchAdminCommand(text) {
  * WhatsApp. Devuelve true si el mensaje era un comando admin (y ya se atendió),
  * para que NO se procese como pedido de un cliente.
  */
-async function tryAdminCommand({ text, from, phoneNumberId, zernio }) {
+async function tryAdminCommand({ text, from, zernio }) {
     const command = matchAdminCommand(text);
     if (!command) return false;
 
@@ -181,7 +176,7 @@ async function tryAdminCommand({ text, from, phoneNumberId, zernio }) {
             : '📊 Estado: ▶️ ACTIVO, respondiendo normalmente.';
     }
 
-    await sendWhatsAppMessage(from, replyText, phoneNumberId, zernio);
+    await sendWhatsAppMessage(from, replyText, zernio);
     logger.info(`🔧 Comando admin "${command}" de ${from}.`);
     return true;
 }
@@ -202,28 +197,7 @@ function isClientConfirming(text) {
 const messageBuffer = new MessageBuffer(config.debounceMs, processBuffer);
 
 // ============================================================
-// GET /webhook — Verificación de Meta
-// ============================================================
-router.get('/', (req, res) => {
-    const verifyToken = process.env.META_VERIFY_TOKEN || `${config.name.toLowerCase()}_token`;
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === verifyToken) {
-            logger.info('✅ Webhook verificado exitosamente con Meta');
-            return res.status(200).send(challenge);
-        } else {
-            logger.warn('Token de verificación inválido');
-            return res.sendStatus(403);
-        }
-    }
-    return res.sendStatus(400);
-});
-
-// ============================================================
-// POST /webhook — Recepción híbrida Meta / Kapso
+// POST /webhook — Recepción de mensajes de Zernio
 // ============================================================
 router.post('/', validateWebhookPayload, async (req, res) => {
     res.sendStatus(200);
@@ -232,106 +206,52 @@ router.post('/', validateWebhookPayload, async (req, res) => {
         const body = req.body;
         logger.debug("📥 Datos recibidos en Webhook:", JSON.stringify(body, null, 2));
 
-        // ── Parseo Zernio (proveedor oficial) ──
-        // Estructura real:
+        // Estructura de Zernio:
         //   { event, message: { direction, text, sender: { phoneNumber, name } },
-        //     conversation: { participantId, participantUsername } }
+        //     conversation: { id, participantId, participantUsername }, account: { id } }
         const zMsg = (body?.message && typeof body.message === 'object' && !Array.isArray(body.message))
             ? body.message
             : null;
-        const isZernio = !!(body?.event || body?.conversation || (zMsg && zMsg.direction !== undefined));
-        if (isZernio) {
-            // Solo procesar mensajes ENTRANTES reales. Ignorar salientes (evita que
-            // el bot se responda a sí mismo) y eventos de estado (delivered/read/sent).
-            const dir = String(zMsg?.direction || "").toLowerCase();
-            if (!zMsg || dir !== "incoming") {
-                logger.debug(`Webhook Zernio ignorado: evento "${body?.event}", direction "${dir}".`);
-                return;
-            }
 
-            const zText = typeof zMsg.text === "string" ? zMsg.text : zMsg.text?.body;
-            const zFrom = String(
-                zMsg.sender?.phoneNumber
-                || body?.conversation?.participantId
-                || body?.conversation?.participantUsername
-                || zMsg.sender?.id
-                || ""
-            ).replace(/^\+/, "");
-            const zName = zMsg.sender?.name || body?.conversation?.participantName || "Cliente";
-
-            if (!zText || !zFrom) {
-                logger.debug("Webhook Zernio ignorado: sin texto o número de remitente.");
-                return;
-            }
-
-            // Datos necesarios para responder por Zernio (envío por conversación).
-            const zConversationId = zMsg.conversationId || body?.conversation?.id;
-            const zAccountId = body?.account?.id || body?.account?.accountId;
-            const zernio = { conversationId: zConversationId, accountId: zAccountId };
-
-            // ── Comando del administrador (pausar/activar/estado) ──
-            if (await tryAdminCommand({ text: zText, from: zFrom, phoneNumberId: "", zernio })) {
-                return;
-            }
-
-            logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
-            messageBuffer.add(zFrom, zText, {
-                senderName: zName,
-                phoneNumberId: "",
-                zernioConversationId: zConversationId,
-                zernioAccountId: zAccountId,
-            });
+        // Solo procesar mensajes ENTRANTES reales. Ignorar salientes (evita que
+        // el bot se responda a sí mismo) y eventos de estado (delivered/read/sent).
+        const dir = String(zMsg?.direction || "").toLowerCase();
+        if (!zMsg || dir !== "incoming") {
+            logger.debug(`Webhook ignorado: evento "${body?.event}", direction "${dir}".`);
             return;
         }
 
-        let incomingMessages = [];
-        let senderName = "Cliente";
-        let phoneNumberId = "";
+        const zText = typeof zMsg.text === "string" ? zMsg.text : zMsg.text?.body;
+        const zFrom = String(
+            zMsg.sender?.phoneNumber
+            || body?.conversation?.participantId
+            || body?.conversation?.participantUsername
+            || zMsg.sender?.id
+            || ""
+        ).replace(/^\+/, "");
+        const zName = zMsg.sender?.name || body?.conversation?.participantName || "Cliente";
 
-        // ── Parseo Meta ──
-        const value = body.entry?.[0]?.changes?.[0]?.value;
-        if (value) {
-            if (value.messages) incomingMessages = value.messages;
-            if (value.metadata?.phone_number_id) phoneNumberId = value.metadata.phone_number_id;
-            if (value.contacts?.[0]?.profile?.name) {
-                senderName = value.contacts[0].profile.name;
-            }
-        } else {
-            // ── Parseo Kapso ──
-            if (Array.isArray(body.data)) incomingMessages = body.data;
-            else if (Array.isArray(body.messages)) incomingMessages = body.messages;
-            else incomingMessages = [body];
-        }
-
-        let textChunk = "";
-        let senderNumber = "";
-
-        for (const item of incomingMessages) {
-            const msg = item.message || item;
-            const text = msg.text?.body || msg.kapso?.content || msg.text;
-            const from = msg.from || msg.sender;
-            const name = item.push_name || msg.push_name || msg.sender_name || item.sender_name;
-
-            if (item.phone_number_id && !phoneNumberId) phoneNumberId = item.phone_number_id;
-            if (text) textChunk += (textChunk ? "\n" : "") + text;
-            if (from) senderNumber = from;
-            if (name && senderName === "Cliente") senderName = name;
-        }
-
-        if (!textChunk || !senderNumber) {
+        if (!zText || !zFrom) {
             logger.debug("Webhook ignorado: sin texto o número de remitente.");
             return;
         }
 
+        // Datos necesarios para responder por Zernio (envío por conversación).
+        const zConversationId = zMsg.conversationId || body?.conversation?.id;
+        const zAccountId = body?.account?.id || body?.account?.accountId;
+        const zernio = { conversationId: zConversationId, accountId: zAccountId };
+
         // ── Comando del administrador (pausar/activar/estado) ──
-        if (await tryAdminCommand({ text: textChunk, from: senderNumber, phoneNumberId, zernio: {} })) {
+        if (await tryAdminCommand({ text: zText, from: zFrom, zernio })) {
             return;
         }
 
-        logger.info(`💬 Fragmento de ${senderName} (${senderNumber}): ${textChunk}`);
-
-        // ── Acumular en buffer ──
-        messageBuffer.add(senderNumber, textChunk, { senderName, phoneNumberId });
+        logger.info(`💬 Fragmento de ${zName} (${zFrom}): ${zText}`);
+        messageBuffer.add(zFrom, zText, {
+            senderName: zName,
+            zernioConversationId: zConversationId,
+            zernioAccountId: zAccountId,
+        });
 
     } catch (error) {
         logger.error("Error en webhook:", error.message || error);
@@ -343,7 +263,7 @@ router.post('/', validateWebhookPayload, async (req, res) => {
 // ============================================================
 async function processBuffer(senderNumber, fragments, meta) {
     const combinedText = fragments.join("\n");
-    const { senderName, phoneNumberId, zernioConversationId, zernioAccountId } = meta;
+    const { senderName, zernioConversationId, zernioAccountId } = meta;
     const zernio = { conversationId: zernioConversationId, accountId: zernioAccountId };
     const state = getUserState(senderNumber);
 
@@ -351,7 +271,7 @@ async function processBuffer(senderNumber, fragments, meta) {
     if (isPaused()) {
         const reply = config.adminControl?.pausedCustomerReply;
         if (reply) {
-            await sendWhatsAppMessage(senderNumber, reply, phoneNumberId, zernio);
+            await sendWhatsAppMessage(senderNumber, reply, zernio);
         }
         logger.info(`⏸️ Bot pausado. Mensaje de ${senderName} (${senderNumber}) no procesado.`);
         return;
@@ -370,14 +290,14 @@ async function processBuffer(senderNumber, fragments, meta) {
     if (state.pendingConfirmation && isClientConfirming(combinedText)) {
         const closing = config.confirmationBlock.closingMessage;
         logger.info(`✅ ${senderName} (${senderNumber}) confirmó. Enviando cierre y desactivando.`);
-        await sendWhatsAppMessage(senderNumber, closing, phoneNumberId, zernio);
+        await sendWhatsAppMessage(senderNumber, closing, zernio);
         chatHistory.add(senderNumber, combinedText, closing);
         state.pendingConfirmation = false;
         state.confirmedDate = getBusinessDate();
 
-        // ── Comanda a cocina + boucher (traza). No debe romper el cierre. ──
+        // ── Boucher + pantalla de comandas (traza). No debe romper el cierre. ──
         try {
-            await dispatchConfirmedOrder({ state, senderName, senderNumber, phoneNumberId });
+            await dispatchConfirmedOrder({ state, senderName, senderNumber });
         } catch (error) {
             logger.error('Error al despachar el pedido confirmado:', error.message || error);
         }
@@ -395,18 +315,28 @@ async function processBuffer(senderNumber, fragments, meta) {
     );
     logger.info(`✅ Respuesta Gemini: ${aiReply}`);
 
-    // ── Enviar al cliente ──
-    await sendWhatsAppMessage(senderNumber, aiReply, phoneNumberId, zernio);
+    // ── ¿Pidió el menú? → la IA pone el marcador; respaldo por si lo olvida ──
+    const { marker } = config.menuImages;
+    const wantsMenu = aiReply.includes(marker) || /\b(menu|carta)\b/.test(normalizeKeyword(combinedText));
+    const replyText = aiReply.split(marker).join('').trim();
+
+    // ── Enviar al cliente: texto y, si aplica, las imágenes del menú ──
+    if (replyText) {
+        await sendWhatsAppMessage(senderNumber, replyText, zernio);
+    }
+    if (wantsMenu) {
+        await sendMenuImages(senderNumber, zernio);
+    }
 
     // ── Actualizar historial ──
-    chatHistory.add(senderNumber, combinedText, aiReply);
+    chatHistory.add(senderNumber, combinedText, replyText);
 
     // ── 4. ¿La IA mostró el resumen con Total? → guardar como "último pedido"
     //        y quedar a la espera de confirmación. La comanda a cocina se
     //        genera recién cuando el cliente confirma (paso 2). ──
     if (config.forwarding.detectMarkers.every(marker => aiReply.includes(marker))) {
         state.pendingConfirmation = true;
-        state.lastOrderSummary = aiReply;
+        state.lastOrderSummary = replyText;
         state.lastOrderAt = Date.now();
         logger.info(`⏳ ${senderName} (${senderNumber}) con pedido pendiente de confirmación.`);
     }
