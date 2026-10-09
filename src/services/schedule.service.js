@@ -61,7 +61,7 @@ export function getBusinessContext() {
             ? '🔥 PROMO ACTIVA HOY (martes a jueves): el **Combo de Hamburguesa Tradicional** cuesta **$15.900** (NO $17.500). '
               + 'Este precio REEMPLAZA cualquier otro para ese combo hoy; los ejemplos de abajo con $17.500 NO aplican hoy. '
               + 'Aplica SOLO al combo de la hamburguesa tradicional; los demás combos y productos mantienen su precio normal. '
-              + 'El domicilio ($1.000) se suma aparte.'
+              + 'El domicilio ($1.000) se suma aparte solo si es a domicilio.'
             : '';
         const instruction = openSkill.replace(/\[PROMO_DIA\]/g, promoTexto);
         return { instruction, type: 'OPEN' };
