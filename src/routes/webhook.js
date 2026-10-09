@@ -316,16 +316,24 @@ async function processBuffer(senderNumber, fragments, meta) {
     logger.info(`✅ Respuesta Gemini: ${aiReply}`);
 
     // ── ¿Pidió el menú? → la IA pone el marcador; respaldo por si lo olvida ──
+    // El marcador indica dónde van las fotos: lo de antes se envía primero
+    // (saludo) y lo de después al final (bebidas, promo, aviso de cerrado).
     const { marker } = config.menuImages;
-    const wantsMenu = aiReply.includes(marker) || /\b(menu|carta)\b/.test(normalizeKeyword(combinedText));
-    const replyText = aiReply.split(marker).join('').trim();
+    const [before, ...after] = aiReply.split(marker);
+    const introText = before.trim();
+    const outroText = after.join('').trim();
+    const wantsMenu = after.length > 0 || /\b(menu|carta)\b/.test(normalizeKeyword(combinedText));
+    const replyText = [introText, outroText].filter(Boolean).join('\n\n');
 
-    // ── Enviar al cliente: texto y, si aplica, las imágenes del menú ──
-    if (replyText) {
-        await sendWhatsAppMessage(senderNumber, replyText, zernio);
+    // ── Enviar al cliente: texto → fotos del menú (si aplica) → resto del texto ──
+    if (introText) {
+        await sendWhatsAppMessage(senderNumber, introText, zernio);
     }
     if (wantsMenu) {
         await sendMenuImages(senderNumber, zernio);
+    }
+    if (outroText) {
+        await sendWhatsAppMessage(senderNumber, outroText, zernio);
     }
 
     // ── Actualizar historial ──
