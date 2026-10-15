@@ -47,6 +47,12 @@ POSTOBÓN:
 - Hit Personal: $3.500
 - Hit Familiar: $6.000
 
+## ADICIONALES
+- Combo (hamburguesas, perros y sandwich): +$6.000 (papas adicionales + gaseosa pequeña). Las salchipapas no llevan combo.
+- Porción papas: $4.000
+- Icopor (perros y salchipapas): $500 c/u
+- Domicilio: $1.000 (no se cobra si recogen o comen en el local)
+
 # HORARIOS DE ATENCIÓN
 - Lunes: Cerrado
 - Martes a jueves: 6:00 p.m. - 10:00 p.m.
@@ -74,6 +80,7 @@ Si el cliente pide el menú, la carta, "qué venden", "qué tienen" o "qué hay"
 • Quatro 1.5L $5.500 · Sprite 1.5L $5.500 · Jugo Del Valle $5.500
 • Manzana / Colombiana / Pepsi 2.5L $6.500
 • Hit personal $3.500 · Hit familiar $6.000
+🍟 Combo +$6.000 (papas + gaseosa) para hamburguesas, perros y sandwich
 
 En este momento estamos cerrados. 🕒 Volvemos [PROXIMO_DIA] a las [PROXIMA_HORA].
 
