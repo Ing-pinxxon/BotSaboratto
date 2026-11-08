@@ -36,13 +36,7 @@ const closedSkill = loadSkill('closed.md');
  * @returns {{ instruction: string, type: 'OPEN' | 'CLOSED' }}
  */
 export function getBusinessContext() {
-    const colombiaTime = new Date().toLocaleString("en-US", {
-        timeZone: config.timezone,
-    });
-    const now = new Date(colombiaTime);
-
-    const dayIndex = now.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
-    const currentTime = now.getHours() + (now.getMinutes() / 60);
+    const { dayIndex, currentTime } = getLocalNow();
     const dayKey = DAY_NAMES[dayIndex];
 
     const schedule = config.schedule[dayKey];
@@ -63,7 +57,14 @@ export function getBusinessContext() {
               + 'Aplica SOLO al combo de la hamburguesa tradicional; los demás combos y productos mantienen su precio normal. '
               + 'El domicilio ($1.000) se suma aparte solo si es a domicilio.'
             : '';
-        const instruction = openSkill.replace(/\[PROMO_DIA\]/g, promoTexto);
+        // Sin esto el modelo no sabe que ya abrimos y copia avisos de
+        // "cerrado" que quedaron en el historial del chat.
+        const estadoTexto = `🟢 ESTADO ACTUAL: ABIERTO. Hoy es ${DAY_NAMES_ES[dayIndex]} y son las ${formatHour(currentTime)} (hora Colombia). `
+            + 'Estamos atendiendo y recibiendo pedidos AHORA. Si el cliente pregunta si estamos abiertos o atendiendo, responde que SÍ y que ya puede hacer su pedido. '
+            + 'Si en mensajes anteriores del chat se dijo que estábamos cerrados, eso YA NO aplica: NUNCA digas que estamos cerrados.';
+        const instruction = openSkill
+            .replace(/\[ESTADO_ACTUAL\]/g, estadoTexto)
+            .replace(/\[PROMO_DIA\]/g, promoTexto);
         return { instruction, type: 'OPEN' };
     }
 
@@ -75,6 +76,26 @@ export function getBusinessContext() {
     instruction = instruction.replace(/\[PROXIMA_HORA\]/g, nextOpening.hora);
 
     return { instruction, type: 'CLOSED' };
+}
+
+/**
+ * Día (0=Dom … 6=Sáb) y hora decimal actuales en la zona horaria del negocio.
+ * Se leen las partes con Intl en vez de re-parsear un string de fecha, que
+ * depende del formato de cada versión de Node/ICU.
+ */
+function getLocalNow() {
+    const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+            timeZone: config.timezone,
+            weekday: 'short',
+            hour: 'numeric',
+            minute: 'numeric',
+            hourCycle: 'h23',
+        }).formatToParts(new Date()).map(p => [p.type, p.value])
+    );
+    const dayIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(parts.weekday);
+    const currentTime = Number(parts.hour) + Number(parts.minute) / 60;
+    return { dayIndex, currentTime };
 }
 
 /**
@@ -126,7 +147,7 @@ function findNextOpening(currentDayIndex, currentTime) {
 function formatHour(decimalHour) {
     const hours24 = Math.floor(decimalHour);
     const minutes = Math.round((decimalHour - hours24) * 60);
-    const hours12 = hours24 > 12 ? hours24 - 12 : hours24;
+    const hours12 = hours24 % 12 || 12;
     const period = hours24 >= 12 ? 'p.m.' : 'a.m.';
     const minuteStr = minutes.toString().padStart(2, '0');
     return `${hours12}:${minuteStr} ${period}`;

@@ -29,7 +29,8 @@ const chatHistory = new ChatHistory(config.maxHistory);
 
 // Estado de pedido por cliente:
 //   { pendingConfirmation: bool, confirmedDate: 'YYYY-MM-DD' | null,
-//     lastOrderSummary: string | null, lastOrderAt: number | null }
+//     lastOrderSummary: string | null, lastOrderAt: number | null,
+//     historyDate: 'YYYY-MM-DD' | null }
 const userState = new Map();
 
 /** Fecha actual en zona horaria del negocio (formato YYYY-MM-DD). */
@@ -45,6 +46,7 @@ function getUserState(senderNumber) {
             confirmedDate: null,
             lastOrderSummary: null,
             lastOrderAt: null,
+            historyDate: null,
         });
     }
     return userState.get(senderNumber);
@@ -305,6 +307,14 @@ async function processBuffer(senderNumber, fragments, meta) {
     }
 
     // ── 3. Flujo normal con IA ──
+    // El historial de días anteriores (avisos de "cerrado", pedidos viejos)
+    // confunde al modelo: cada día de atención empieza limpio.
+    const today = getBusinessDate();
+    if (state.historyDate !== today) {
+        chatHistory.clear(senderNumber);
+        state.historyDate = today;
+    }
+
     const { instruction, type } = getBusinessContext();
     logger.info(`🧠 Generando respuesta con Gemini (${type} Agent)...`);
 
