@@ -15,7 +15,7 @@ export class MessageBuffer {
         this.onFlush = onFlush;
         this.buffers = {};    // { [senderNumber]: string[] }
         this.timers = {};     // { [senderNumber]: NodeJS.Timeout }
-        this.meta = {};       // { [senderNumber]: { senderName, phoneNumberId } }
+        this.meta = {};       // { [senderNumber]: { senderName, zernioConversationId, zernioAccountId } }
     }
 
     /**

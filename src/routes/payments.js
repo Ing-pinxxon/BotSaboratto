@@ -5,7 +5,6 @@
 import { Router } from 'express';
 import dotenv from 'dotenv';
 import config from '../../config/bot.config.js';
-import { sendWhatsAppMessage } from '../services/whatsapp.service.js';
 import { validatePaymentPayload } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 
@@ -46,15 +45,11 @@ router.post('/', validatePaymentPayload, async (req, res) => {
             `✅ El pago ha sido confirmado.\n` +
             `¡Pueden continuar con el servicio! 🚀`;
 
-        const notifyNumber = config.notifications.payments;
-        const defaultPhoneId = process.env.DEFAULT_PHONE_NUMBER_ID;
-
-        if (notifyNumber) {
-            await sendWhatsAppMessage(notifyNumber, mensaje, defaultPhoneId);
-            logger.info('✅ Notificación de pago enviada al equipo');
-        } else {
-            logger.warn('Número de notificación de pagos no configurado.');
-        }
+        // Zernio solo responde dentro de una conversación abierta por el
+        // cliente, así que no puede escribirle al número del equipo. El pago
+        // queda registrado en los logs.
+        logger.info(mensaje);
+        logger.warn('Notificación de pago por WhatsApp no disponible con Zernio: el pago quedó solo en los logs.');
 
         logger.info('💳 ====== FIN NOTIFICACIÓN ======\n');
 

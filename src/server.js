@@ -15,5 +15,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     logger.info(`🚀 Bot de ${config.name} corriendo en el puerto ${PORT}`);
     logger.info(`${config.emoji} Timezone: ${config.timezone}`);
-    logger.info(`📋 Endpoints: /webhook, /notify-payment, /health`);
+    logger.info(`📋 Endpoints: /webhook, /notify-payment, /menu, /health`);
 });

@@ -22,13 +22,48 @@ export default {
     schedule: {
         sunday:    [18, 22.5],    // 6:00 PM - 10:30 PM (cierre público 11 PM)
         monday:    null,           // Cerrado
-        tuesday:   [19, 21.5],    // 7:00 PM - 9:30 PM  (cierre público 10 PM)
-        wednesday: [19, 21.5],
-        thursday:  [19, 21.5],
+        tuesday:   [18, 21.5],    // 6:00 PM - 9:30 PM  (cierre público 10 PM)
+        wednesday: [18, 21.5],
+        thursday:  [18, 21.5],
         friday:    [18, 22.5],    // 6:00 PM - 10:30 PM
         saturday:  [18, 22.5],
         // earlyCloseMinutes ya está implícito en los horarios de arriba
         // (el horario público de Saboratto cierra 30 min después del bot)
+    },
+
+    // ── Control manual del bot (pausar/activar por WhatsApp) ──
+    // Tú (el dueño) controlas el bot enviándole una palabra clave desde
+    // tu WhatsApp personal al número del bot. Un cliente normal nunca
+    // escribiría estas frases pidiendo comida.
+    adminControl: {
+        // Números autorizados a controlar el bot (tu WhatsApp personal).
+        // Se leen de ADMIN_NUMBERS en las variables de entorno, separados
+        // por coma. Ej: ADMIN_NUMBERS=573001112233,573004445566
+        // Si queda vacío, CUALQUIERA que sepa la palabra clave podría
+        // controlar el bot (menos seguro). Recomendado: pon tu número.
+        adminNumbers: (process.env.ADMIN_NUMBERS || '')
+            .split(',')
+            .map(n => n.replace(/\D/g, ''))
+            .filter(Boolean),
+        // Palabras clave (no distinguen mayúsculas ni acentos).
+        pauseKeyword: 'pausar bot',
+        resumeKeyword: 'activar bot',
+        statusKeyword: 'estado bot',
+        // Qué responder a los clientes mientras el bot está pausado.
+        // null = el bot NO responde nada (tú atiendes manualmente).
+        // O pon un texto, ej: "Dame un momento, en seguida te atiendo. 🙌"
+        pausedCustomerReply: null,
+    },
+
+    // ── Menú en imágenes ──
+    // Cuando el cliente pide el menú, la IA responde con el marcador y el
+    // bot envía estas imágenes (guardadas en public/menu/ del repo).
+    // WhatsApp acepta JPG o PNG de máximo 5 MB.
+    menuImages: {
+        // Dominio público del bot en Railway (Settings → Networking).
+        publicBaseUrl: process.env.PUBLIC_BASE_URL || 'https://botsaboratto.up.railway.app',
+        files: ['menu-1.jpg', 'menu-2.jpg'],
+        marker: '[ENVIAR_MENU]',
     },
 
     // ── Datos de pago ──
@@ -38,24 +73,24 @@ export default {
         holder: "Daniel Felipe Pinzón Rodríguez",
     },
 
-    // ── Números de notificación ──
-    // Estos se leen de variables de entorno para seguridad.
-    // Si no existen en .env, quedan null y no se envían notificaciones.
-    notifications: {
-        // Número al que se reenvían confirmaciones (antes "cocina")
-        forwarding: process.env.KITCHEN_NUMBER || null,
-        // Número al que se notifican pagos
-        payments: process.env.BOLD_NOTIFY_NUMBER || null,
-    },
-
-    // ── Detección de confirmación para reenvío ──
-    // El bot reenvía al número de forwarding cuando la respuesta
-    // de la IA contiene TODOS estos marcadores:
+    // ── Detección del resumen de pedido ──
+    // El bot considera que la IA mostró un pedido con total cuando la
+    // respuesta contiene TODOS estos marcadores. Ese resumen se guarda
+    // y se envía a cocina en el momento en que el cliente confirma.
     forwarding: {
         detectMarkers: ["Total:"],  // Marcadores en la respuesta de IA
-        ignorePatterns: [               // Si el mensaje del cliente tiene esto, NO reenviar
-            /gracias/i, /ok/i, /listo/i, /perfecto/i, /👍/, /si/i, /confirmado/i,
-        ],
+    },
+
+    // ── Guardado de pedidos (boucher / traza) ──
+    // Cada pedido confirmado se guarda SIEMPRE en un CSV local y, si
+    // GOOGLE_SHEET_ID está configurado, también en una hoja de cálculo
+    // en la nube (Google Sheets) para análisis y decisiones.
+    orders: {
+        csvPath: 'data/pedidos.csv',
+        // Camino simple (recomendado): URL del Apps Script Web App.
+        sheetWebhookUrl: process.env.SHEETS_WEBHOOK_URL || null,
+        // Camino avanzado: service account de Google.
+        sheetId: process.env.GOOGLE_SHEET_ID || null,
     },
 
     // ── Cierre y desactivación tras confirmación ──
