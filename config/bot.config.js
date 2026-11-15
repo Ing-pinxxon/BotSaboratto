@@ -21,8 +21,8 @@ export default {
     // Horas en formato 24h decimal (ej. 18.5 = 6:30 PM)
     schedule: {
         sunday:    [18, 22.5],    // 6:00 PM - 10:30 PM (cierre público 11 PM)
-        monday:    null,           // Cerrado
-        tuesday:   [18, 21.5],    // 6:00 PM - 9:30 PM  (cierre público 10 PM)
+        monday:    [18, 21.5],    // 6:00 PM - 9:30 PM  (cierre público 10 PM)
+        tuesday:   [18, 21.5],
         wednesday: [18, 21.5],
         thursday:  [18, 21.5],
         friday:    [18, 22.5],    // 6:00 PM - 10:30 PM

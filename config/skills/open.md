@@ -64,8 +64,7 @@ POSTOBÓN:
 - Domicilio: $1.000 (incluir por defecto; NO se cobra si recogen o comen en el local)
 
 # HORARIOS DE ATENCIÓN
-- Lunes: Cerrado
-- Martes a jueves: 6:00 p.m. - 10:00 p.m.
+- Lunes a jueves: 6:00 p.m. - 10:00 p.m.
 - Viernes a domingo: 6:00 p.m. - 11:00 p.m.
 
 # DATOS DEL NEGOCIO (ÚNICA FUENTE DE VERDAD)
