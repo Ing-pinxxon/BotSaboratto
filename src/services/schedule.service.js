@@ -49,10 +49,10 @@ export function getBusinessContext() {
     }
 
     if (isOpen) {
-        // Promo martes a jueves: combo de Hamburguesa Tradicional a $15.900.
-        const promoActiva = dayIndex >= 2 && dayIndex <= 4; // 2=mar, 3=mié, 4=jue
+        // Promo lunes a jueves: combo de Hamburguesa Tradicional a $15.900.
+        const promoActiva = dayIndex >= 1 && dayIndex <= 4; // 1=lun, 2=mar, 3=mié, 4=jue
         const promoTexto = promoActiva
-            ? '🔥 PROMO ACTIVA HOY (martes a jueves): el **Combo de Hamburguesa Tradicional** cuesta **$15.900** (NO $17.500). '
+            ? '🔥 PROMO ACTIVA HOY (lunes a jueves): el **Combo de Hamburguesa Tradicional** cuesta **$15.900** (NO $17.500). '
               + 'Este precio REEMPLAZA cualquier otro para ese combo hoy; los ejemplos de abajo con $17.500 NO aplican hoy. '
               + 'Aplica SOLO al combo de la hamburguesa tradicional; los demás combos y productos mantienen su precio normal. '
               + 'El domicilio ($1.000) se suma aparte solo si es a domicilio.'
