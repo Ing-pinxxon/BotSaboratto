@@ -39,6 +39,7 @@ Ejemplos:
 - Salchipapa Tradicional: $10.000 (Papa francesa, salchicha cerdo ahumado, queso doble crema, huevo codorniz, salsa cheddar)
 - Salchipapa Ranchera: $15.000 (Tradicional + queso doble crema, salchicha Ranchera picada, tocineta picada)
 - Salchipapa Doble: $22.000 (Doble Salchipapa Tradicional + queso doble crema, salchicha Ranchera premium, tocineta cortada + doble tocineta, doble jamón ahumado, dos huevos de codorniz)
+- Salchipapa Suprema: $25.000 (Doble porción de papa, doble salchicha, pollo, carne, cebolla caramelizada, doble queso fundido, doble huevo de codorniz y salsas de la casa premium)
 
 ## BEBIDAS 🥤
 COCA-COLA:
