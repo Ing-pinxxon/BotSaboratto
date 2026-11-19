@@ -25,7 +25,7 @@ Ejemplos:
 - Tradicional: $9.000 | Especial: $13.000 | Ranchero: $13.000
 
 ## SALCHIPAPAS 🍟
-- Tradicional: $10.000 | Ranchera: $15.000 | Doble: $22.000 
+- Tradicional: $10.000 | Ranchera: $15.000 | Doble: $22.000 | Suprema: $25.000 
 
 ## SANDWICHES 
 - Sandwich Saboratto: $12.000
