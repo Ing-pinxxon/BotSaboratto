@@ -71,7 +71,18 @@ export function getBusinessContext() {
     // ── Calcular próxima apertura ──
     const nextOpening = findNextOpening(dayIndex, currentTime);
 
+    // Sin esto el modelo no sabe qué hora es y copia los "estamos abiertos,
+    // ya puedes pedir" que quedaron en el historial, o deduce del horario
+    // público (que cierra 30 min después que el bot) que seguimos abiertos.
+    const pastCutoff = Boolean(schedule) && currentTime >= schedule[1];
+    const estadoTexto = `🔴 ESTADO ACTUAL: CERRADO. Hoy es ${DAY_NAMES_ES[dayIndex]} y son las ${formatHour(currentTime)} (hora Colombia). `
+        + 'NO estamos recibiendo pedidos AHORA. '
+        + (pastCutoff ? 'La toma de pedidos de hoy ya cerró, aunque el horario de abajo diga una hora más tarde. ' : '')
+        + `Si el cliente pregunta si estamos abiertos o atendiendo, responde que NO, que ahora estamos cerrados y que volvemos ${nextOpening.dia} a las ${nextOpening.hora}. `
+        + 'Si en mensajes anteriores del chat se dijo que estábamos abiertos o que ya podía hacer su pedido, eso YA NO aplica: NUNCA digas que estamos abiertos ni que puedes recibir su pedido.';
+
     let instruction = closedSkill;
+    instruction = instruction.replace(/\[ESTADO_ACTUAL\]/g, estadoTexto);
     instruction = instruction.replace(/\[PROXIMO_DIA\]/g, nextOpening.dia);
     instruction = instruction.replace(/\[PROXIMA_HORA\]/g, nextOpening.hora);
 

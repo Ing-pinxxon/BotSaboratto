@@ -30,7 +30,7 @@ const chatHistory = new ChatHistory(config.maxHistory);
 // Estado de pedido por cliente:
 //   { pendingConfirmation: bool, confirmedDate: 'YYYY-MM-DD' | null,
 //     lastOrderSummary: string | null, lastOrderAt: number | null,
-//     historyDate: 'YYYY-MM-DD' | null }
+//     historyDate: 'YYYY-MM-DD' | null, historyMode: 'OPEN' | 'CLOSED' | null }
 const userState = new Map();
 
 /** Fecha actual en zona horaria del negocio (formato YYYY-MM-DD). */
@@ -47,6 +47,7 @@ function getUserState(senderNumber) {
             lastOrderSummary: null,
             lastOrderAt: null,
             historyDate: null,
+            historyMode: null,
         });
     }
     return userState.get(senderNumber);
@@ -307,15 +308,18 @@ async function processBuffer(senderNumber, fragments, meta) {
     }
 
     // ── 3. Flujo normal con IA ──
-    // El historial de días anteriores (avisos de "cerrado", pedidos viejos)
-    // confunde al modelo: cada día de atención empieza limpio.
+    const { instruction, type } = getBusinessContext();
+
+    // El historial de otro día o de otro modo (abierto ↔ cerrado) confunde
+    // al modelo: después del cierre repite "estamos abiertos, ya puedes
+    // pedir" y al abrir repite "estamos cerrados". Cada tramo empieza limpio.
     const today = getBusinessDate();
-    if (state.historyDate !== today) {
+    if (state.historyDate !== today || state.historyMode !== type) {
         chatHistory.clear(senderNumber);
         state.historyDate = today;
+        state.historyMode = type;
     }
 
-    const { instruction, type } = getBusinessContext();
     logger.info(`🧠 Generando respuesta con Gemini (${type} Agent)...`);
 
     const aiReply = await generateResponse(
